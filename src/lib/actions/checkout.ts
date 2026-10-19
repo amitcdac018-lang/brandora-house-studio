@@ -57,11 +57,21 @@ export async function createOrderAction(input: unknown) {
     return { error: "Too many checkout attempts. Please wait and try again." };
   }
 
-  // Idempotency: if this exact key already produced an order, return it instead of creating a duplicate.
+  // Idempotency: if this exact key already produced an order with a real payment attempt,
+  // return it instead of creating a duplicate. If the prior attempt never got as far as
+  // creating a Razorpay order (e.g. it failed and was rolled back), fall through and retry
+  // from scratch rather than reporting a hollow "success" with nothing to pay against.
   const existingOrder = await prisma.order.findUnique({ where: { idempotencyKey } });
   if (existingOrder) {
     const payment = await prisma.payment.findFirst({ where: { orderId: existingOrder.id } });
-    return { ok: true, orderId: existingOrder.id, razorpayOrderId: payment?.providerOrderId };
+    if (payment?.providerOrderId) {
+      return {
+        ok: true,
+        orderId: existingOrder.id,
+        razorpayOrderId: payment.providerOrderId,
+        amount: Number(existingOrder.grandTotal),
+      };
+    }
   }
 
   const address = await prisma.address.findUnique({ where: { id: addressId } });
