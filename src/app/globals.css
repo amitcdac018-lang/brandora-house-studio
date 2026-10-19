@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+
+  /* Brandora House Studio — placeholder premium brand palette.
+     Swap these once the real Instagram brand assets/colors are supplied. */
+  --brand-ink: #14110f;
+  --brand-ink-soft: #2a241f;
+  --brand-gold: #c9a24b;
+  --brand-gold-soft: #e4cd94;
+  --brand-cream: #f7f3ec;
+  --brand-cream-dark: #ece4d4;
+  --brand-success: #2f7a4f;
+  --brand-danger: #b3261e;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-ink-soft: var(--brand-ink-soft);
+  --color-brand-gold: var(--brand-gold);
+  --color-brand-gold-soft: var(--brand-gold-soft);
+  --color-brand-cream: var(--brand-cream);
+  --color-brand-cream-dark: var(--brand-cream-dark);
+  --color-brand-success: var(--brand-success);
+  --color-brand-danger: var(--brand-danger);
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+}
+
+body {
+  background: var(--brand-cream);
+  color: var(--brand-ink);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand-gold);
+  outline-offset: 2px;
+}

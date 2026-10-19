@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: brandora_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: brandora
+      POSTGRES_PASSWORD: brandora_dev_password
+      POSTGRES_DB: brandora
+    ports:
+      - "5433:5432"
+    volumes:
+      - brandora_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U brandora -d brandora"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  brandora_pgdata:
