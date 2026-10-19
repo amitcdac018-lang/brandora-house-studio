@@ -133,13 +133,26 @@ export async function createOrderAction(input: unknown) {
       return createdOrder;
     });
 
-    const razorpay = getRazorpayClient();
-    const razorpayOrder = await razorpay.orders.create({
-      amount: Math.round(Number(order.grandTotal) * 100),
-      currency: "INR",
-      receipt: order.orderNumber,
-      notes: { orderId: order.id, userId: user.id },
-    });
+    let razorpayOrder;
+    try {
+      const razorpay = getRazorpayClient();
+      razorpayOrder = await razorpay.orders.create({
+        amount: Math.round(Number(order.grandTotal) * 100),
+        currency: "INR",
+        receipt: order.orderNumber,
+        notes: { orderId: order.id, userId: user.id },
+      });
+    } catch (razorpayError) {
+      // The order + stock reservation already committed above. If we can't reach Razorpay,
+      // we must undo both rather than leave stock locked against an order nobody can pay for.
+      await releaseOrderReservation(order.id);
+      return {
+        error:
+          razorpayError instanceof Error
+            ? `Could not start payment: ${razorpayError.message}`
+            : "Could not start payment. Please try again.",
+      };
+    }
 
     await prisma.payment.create({
       data: {
@@ -166,4 +179,32 @@ export async function createOrderAction(input: unknown) {
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Could not create order." };
   }
+}
+
+/**
+ * Undoes a pending order's stock reservation and marks it failed when payment could never be
+ * started (e.g. the Razorpay API call itself failed). Cart items are intentionally not restored —
+ * the customer is redirected back to the cart/shop to re-add items, which is simpler and safer
+ * than reconstructing a cart snapshot that may now conflict with updated stock or pricing.
+ */
+async function releaseOrderReservation(orderId: string) {
+  await prisma.$transaction(async (tx) => {
+    const items = await tx.orderItem.findMany({ where: { orderId } });
+    for (const item of items) {
+      await tx.productVariant.update({
+        where: { id: item.variantId },
+        data: { stock: { increment: item.quantity } },
+      });
+      await tx.inventoryLog.create({
+        data: {
+          variantId: item.variantId,
+          change: item.quantity,
+          type: "RESERVATION_RELEASE",
+          reason: "Payment could not be initiated",
+          orderId,
+        },
+      });
+    }
+    await tx.order.update({ where: { id: orderId }, data: { status: "PAYMENT_FAILED" } });
+  });
 }
