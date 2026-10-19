@@ -9,14 +9,21 @@ function getEnv(name: string): string {
 }
 
 let client: Razorpay | null = null;
+let clientKeyId: string | null = null;
 
-/** Lazily constructed so builds/tests that never touch payments don't require real keys. */
+/**
+ * Lazily constructed so builds/tests that never touch payments don't require real keys.
+ * Rebuilds the client if RAZORPAY_KEY_ID changes between calls (e.g. a warm serverless
+ * instance surviving an env var update) instead of silently keeping a stale client.
+ */
 export function getRazorpayClient(): Razorpay {
-  if (!client) {
+  const keyId = getEnv("RAZORPAY_KEY_ID");
+  if (!client || clientKeyId !== keyId) {
     client = new Razorpay({
-      key_id: getEnv("RAZORPAY_KEY_ID"),
+      key_id: keyId,
       key_secret: getEnv("RAZORPAY_KEY_SECRET"),
     });
+    clientKeyId = keyId;
   }
   return client;
 }

@@ -29,7 +29,17 @@ function describeRazorpayError(err: unknown): string {
     }
   }
   if (err instanceof Error) return err.message;
-  return "Please try again.";
+  // TEMPORARY diagnostic fallback — remove once the real failure cause is identified.
+  // Safe to surface: this is whatever the Razorpay SDK threw, never our own secret values.
+  return `[unrecognized error shape] ${safeJsonStringify(err)}`;
+}
+
+function safeJsonStringify(value: unknown): string {
+  try {
+    return JSON.stringify(value, Object.getOwnPropertyNames(value as object));
+  } catch {
+    return String(value);
+  }
 }
 
 export async function createOrderAction(input: unknown) {
@@ -161,7 +171,14 @@ export async function createOrderAction(input: unknown) {
     } catch (razorpayError) {
       // The order + stock reservation already committed above. If we can't reach Razorpay,
       // we must undo both rather than leave stock locked against an order nobody can pay for.
-      console.error("Razorpay order creation failed:", razorpayError);
+      console.error(
+        "Razorpay order creation failed:",
+        razorpayError,
+        "| typeof:",
+        typeof razorpayError,
+        "| JSON:",
+        safeJsonStringify(razorpayError)
+      );
       await releaseOrderReservation(order.id);
       return {
         error: `Could not start payment: ${describeRazorpayError(razorpayError)}`,
