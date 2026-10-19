@@ -23,7 +23,10 @@ function generateOrderNumber(): string {
  */
 function describeRazorpayError(err: unknown): string {
   if (err && typeof err === "object") {
-    const maybeRazorpay = err as { error?: { description?: string; code?: string }; statusCode?: number };
+    const maybeRazorpay = err as {
+      error?: { description?: string; code?: string };
+      statusCode?: number;
+    };
     if (maybeRazorpay.error?.description) {
       return `${maybeRazorpay.error.description}${maybeRazorpay.error.code ? ` (${maybeRazorpay.error.code})` : ""}`;
     }
@@ -51,8 +54,12 @@ export async function createOrderAction(input: unknown) {
   const { addressId, idempotencyKey } = parsed.data;
 
   const headerList = await headers();
-  const ip = headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  const { success } = await rateLimit(`checkout:${user.id}:${ip}`, { limit: 10, windowMs: 10 * 60 * 1000 });
+  const ip =
+    headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const { success } = await rateLimit(`checkout:${user.id}:${ip}`, {
+    limit: 10,
+    windowMs: 10 * 60 * 1000,
+  });
   if (!success) {
     return { error: "Too many checkout attempts. Please wait and try again." };
   }
@@ -61,9 +68,13 @@ export async function createOrderAction(input: unknown) {
   // return it instead of creating a duplicate. If the prior attempt never got as far as
   // creating a Razorpay order (e.g. it failed and was rolled back), fall through and retry
   // from scratch rather than reporting a hollow "success" with nothing to pay against.
-  const existingOrder = await prisma.order.findUnique({ where: { idempotencyKey } });
+  const existingOrder = await prisma.order.findUnique({
+    where: { idempotencyKey },
+  });
   if (existingOrder) {
-    const payment = await prisma.payment.findFirst({ where: { orderId: existingOrder.id } });
+    const payment = await prisma.payment.findFirst({
+      where: { orderId: existingOrder.id },
+    });
     if (payment?.providerOrderId) {
       return {
         ok: true,
@@ -85,89 +96,103 @@ export async function createOrderAction(input: unknown) {
   }
 
   try {
-    const order = await prisma.$transaction(async (tx) => {
-      // Re-fetch and lock-by-check each variant's live stock/price inside the transaction —
-      // never trust cart snapshot or client-submitted values for money or inventory.
-      let subtotal = 0;
-      const orderItemsData: {
-        productId: string;
-        variantId: string;
-        nameSnapshot: string;
-        skuSnapshot: string;
-        sizeSnapshot: string;
-        colorSnapshot: string;
-        unitPrice: number;
-        quantity: number;
-      }[] = [];
+    const order = await prisma.$transaction(
+      async (tx) => {
+        // Re-fetch and lock-by-check each variant's live stock/price inside the transaction —
+        // never trust cart snapshot or client-submitted values for money or inventory.
+        let subtotal = 0;
+        const orderItemsData: {
+          productId: string;
+          variantId: string;
+          nameSnapshot: string;
+          skuSnapshot: string;
+          sizeSnapshot: string;
+          colorSnapshot: string;
+          unitPrice: number;
+          quantity: number;
+        }[] = [];
 
-      for (const item of cart.items) {
-        const variant = await tx.productVariant.findUnique({
-          where: { id: item.variantId },
-          include: { product: true },
-        });
+        for (const item of cart.items) {
+          const variant = await tx.productVariant.findUnique({
+            where: { id: item.variantId },
+            include: { product: true },
+          });
 
-        if (!variant || !variant.isActive || !variant.product.isActive) {
-          throw new Error(`"${item.product.name}" is no longer available.`);
-        }
-        if (variant.stock < item.quantity) {
-          throw new Error(`Only ${variant.stock} left in stock for "${item.product.name}" (${variant.size}/${variant.color}).`);
-        }
+          if (!variant || !variant.isActive || !variant.product.isActive) {
+            throw new Error(`"${item.product.name}" is no longer available.`);
+          }
+          if (variant.stock < item.quantity) {
+            throw new Error(
+              `Only ${variant.stock} left in stock for "${item.product.name}" (${variant.size}/${variant.color}).`,
+            );
+          }
 
-        const unitPrice = variant.priceOverride
-          ? Number(variant.priceOverride)
-          : discountedPrice(Number(variant.product.basePrice), variant.product.discountPct);
+          const unitPrice = variant.priceOverride
+            ? Number(variant.priceOverride)
+            : discountedPrice(
+                Number(variant.product.basePrice),
+                variant.product.discountPct,
+              );
 
-        subtotal += unitPrice * item.quantity;
+          subtotal += unitPrice * item.quantity;
 
-        orderItemsData.push({
-          productId: variant.productId,
-          variantId: variant.id,
-          nameSnapshot: variant.product.name,
-          skuSnapshot: variant.sku,
-          sizeSnapshot: variant.size,
-          colorSnapshot: variant.color,
-          unitPrice,
-          quantity: item.quantity,
-        });
-
-        // Reserve stock immediately to prevent overselling between order creation and payment capture.
-        await tx.productVariant.update({
-          where: { id: variant.id },
-          data: { stock: { decrement: item.quantity } },
-        });
-
-        await tx.inventoryLog.create({
-          data: {
+          orderItemsData.push({
+            productId: variant.productId,
             variantId: variant.id,
-            change: -item.quantity,
-            type: "RESERVATION",
-            reason: "Order checkout reservation",
+            nameSnapshot: variant.product.name,
+            skuSnapshot: variant.sku,
+            sizeSnapshot: variant.size,
+            colorSnapshot: variant.color,
+            unitPrice,
+            quantity: item.quantity,
+          });
+
+          // Reserve stock immediately to prevent overselling between order creation and payment capture.
+          await tx.productVariant.update({
+            where: { id: variant.id },
+            data: { stock: { decrement: item.quantity } },
+          });
+
+          await tx.inventoryLog.create({
+            data: {
+              variantId: variant.id,
+              change: -item.quantity,
+              type: "RESERVATION",
+              reason: "Order checkout reservation",
+            },
+          });
+        }
+
+        const { charge: shippingCharge, estimatedDays } =
+          await calculateShipping(subtotal);
+        const grandTotal = subtotal + shippingCharge;
+
+        const createdOrder = await tx.order.create({
+          data: {
+            orderNumber: generateOrderNumber(),
+            userId: user.id,
+            addressId,
+            status: "PENDING_PAYMENT",
+            subtotal,
+            shippingCharge,
+            grandTotal,
+            idempotencyKey,
+            estimatedDeliveryAt: new Date(
+              Date.now() + estimatedDays * 24 * 60 * 60 * 1000,
+            ),
+            items: { create: orderItemsData },
           },
         });
-      }
 
-      const { charge: shippingCharge, estimatedDays } = await calculateShipping(subtotal);
-      const grandTotal = subtotal + shippingCharge;
+        await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
 
-      const createdOrder = await tx.order.create({
-        data: {
-          orderNumber: generateOrderNumber(),
-          userId: user.id,
-          addressId,
-          status: "PENDING_PAYMENT",
-          subtotal,
-          shippingCharge,
-          grandTotal,
-          idempotencyKey,
-          estimatedDeliveryAt: new Date(Date.now() + estimatedDays * 24 * 60 * 60 * 1000),
-          items: { create: orderItemsData },
-        },
-      });
-
-      await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
-
-      return createdOrder;
-    });
+        return createdOrder;
+      },
+      // Prisma's default 5s interactive-transaction timeout assumes low-latency local Postgres.
+      // Against a serverless/pooled connection (e.g. Neon) each per-item round trip adds real
+      // network latency, so a multi-item cart can legitimately take longer than that.
+      { timeout: 20_000, maxWait: 10_000 },
+    );
 
     let razorpayOrder;
     try {
@@ -187,7 +212,7 @@ export async function createOrderAction(input: unknown) {
         "| typeof:",
         typeof razorpayError,
         "| JSON:",
-        safeJsonStringify(razorpayError)
+        safeJsonStringify(razorpayError),
       );
       await releaseOrderReservation(order.id);
       return {
@@ -216,9 +241,16 @@ export async function createOrderAction(input: unknown) {
       },
     });
 
-    return { ok: true, orderId: order.id, razorpayOrderId: razorpayOrder.id, amount: Number(order.grandTotal) };
+    return {
+      ok: true,
+      orderId: order.id,
+      razorpayOrderId: razorpayOrder.id,
+      amount: Number(order.grandTotal),
+    };
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "Could not create order." };
+    return {
+      error: error instanceof Error ? error.message : "Could not create order.",
+    };
   }
 }
 
@@ -229,23 +261,29 @@ export async function createOrderAction(input: unknown) {
  * than reconstructing a cart snapshot that may now conflict with updated stock or pricing.
  */
 async function releaseOrderReservation(orderId: string) {
-  await prisma.$transaction(async (tx) => {
-    const items = await tx.orderItem.findMany({ where: { orderId } });
-    for (const item of items) {
-      await tx.productVariant.update({
-        where: { id: item.variantId },
-        data: { stock: { increment: item.quantity } },
+  await prisma.$transaction(
+    async (tx) => {
+      const items = await tx.orderItem.findMany({ where: { orderId } });
+      for (const item of items) {
+        await tx.productVariant.update({
+          where: { id: item.variantId },
+          data: { stock: { increment: item.quantity } },
+        });
+        await tx.inventoryLog.create({
+          data: {
+            variantId: item.variantId,
+            change: item.quantity,
+            type: "RESERVATION_RELEASE",
+            reason: "Payment could not be initiated",
+            orderId,
+          },
+        });
+      }
+      await tx.order.update({
+        where: { id: orderId },
+        data: { status: "PAYMENT_FAILED" },
       });
-      await tx.inventoryLog.create({
-        data: {
-          variantId: item.variantId,
-          change: item.quantity,
-          type: "RESERVATION_RELEASE",
-          reason: "Payment could not be initiated",
-          orderId,
-        },
-      });
-    }
-    await tx.order.update({ where: { id: orderId }, data: { status: "PAYMENT_FAILED" } });
-  });
+    },
+    { timeout: 20_000, maxWait: 10_000 },
+  );
 }
