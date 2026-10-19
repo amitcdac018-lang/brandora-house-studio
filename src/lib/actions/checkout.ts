@@ -16,6 +16,22 @@ function generateOrderNumber(): string {
   return `BHS-${stamp}-${random}`;
 }
 
+/**
+ * Razorpay's Node SDK typically rejects with { statusCode, error: { description, code, ... } }
+ * rather than a plain Error — surface that description when present so the real cause (bad
+ * credentials, invalid amount, etc.) isn't hidden behind "Could not start payment."
+ */
+function describeRazorpayError(err: unknown): string {
+  if (err && typeof err === "object") {
+    const maybeRazorpay = err as { error?: { description?: string; code?: string }; statusCode?: number };
+    if (maybeRazorpay.error?.description) {
+      return `${maybeRazorpay.error.description}${maybeRazorpay.error.code ? ` (${maybeRazorpay.error.code})` : ""}`;
+    }
+  }
+  if (err instanceof Error) return err.message;
+  return "Please try again.";
+}
+
 export async function createOrderAction(input: unknown) {
   const user = await requireUser();
   const parsed = createOrderSchema.safeParse(input);
@@ -145,12 +161,10 @@ export async function createOrderAction(input: unknown) {
     } catch (razorpayError) {
       // The order + stock reservation already committed above. If we can't reach Razorpay,
       // we must undo both rather than leave stock locked against an order nobody can pay for.
+      console.error("Razorpay order creation failed:", razorpayError);
       await releaseOrderReservation(order.id);
       return {
-        error:
-          razorpayError instanceof Error
-            ? `Could not start payment: ${razorpayError.message}`
-            : "Could not start payment. Please try again.",
+        error: `Could not start payment: ${describeRazorpayError(razorpayError)}`,
       };
     }
 
