@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateOrderStatusAction, createShipmentAction, refundOrderAction } from "@/lib/actions/admin/orders";
+import {
+  updateOrderStatusAction,
+  createShipmentAction,
+  createShiprocketShipmentAction,
+  cancelShiprocketShipmentAction,
+  refundOrderAction,
+} from "@/lib/actions/admin/orders";
 
 const statusOptions = [
   "PENDING_PAYMENT",
@@ -14,18 +20,28 @@ const statusOptions = [
   "PAYMENT_FAILED",
 ];
 
+type ShipmentSummary = {
+  id: string;
+  provider: "MANUAL" | "SHIPROCKET";
+  status: string;
+  trackingNumber: string | null;
+};
+
 export function OrderManager({
   orderId,
   currentStatus,
   capturedAmount,
+  shipments = [],
 }: {
   orderId: string;
   currentStatus: string;
   capturedAmount: number | null;
+  shipments?: ShipmentSummary[];
 }) {
   const [status, setStatus] = useState(currentStatus);
   const [carrier, setCarrier] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
+  const [weightKg, setWeightKg] = useState(0.5);
   const [refundAmount, setRefundAmount] = useState(capturedAmount ?? 0);
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -46,6 +62,28 @@ export function OrderManager({
       const result = await createShipmentAction({ orderId, carrier, trackingNumber });
       setMessage(
         result?.error ? { type: "error", text: result.error } : { type: "success", text: "Shipment created." }
+      );
+    });
+  }
+
+  function handleShiprocketBook() {
+    setMessage(null);
+    startTransition(async () => {
+      const result = await createShiprocketShipmentAction({ orderId, weightKg });
+      setMessage(
+        result?.error
+          ? { type: "error", text: result.error }
+          : { type: "success", text: `Booked with ${result.courier} — AWB ${result.awb}` }
+      );
+    });
+  }
+
+  function handleCancelShipment(shipmentId: string) {
+    setMessage(null);
+    startTransition(async () => {
+      const result = await cancelShiprocketShipmentAction({ shipmentId });
+      setMessage(
+        result?.error ? { type: "error", text: result.error } : { type: "success", text: "Shipment cancelled." }
       );
     });
   }
@@ -87,8 +125,68 @@ export function OrderManager({
         </div>
       </div>
 
+      {(() => {
+        const activeShiprocketShipment = shipments.find(
+          (s) => s.provider === "SHIPROCKET" && s.status !== "CANCELLED"
+        );
+
+        if (activeShiprocketShipment) {
+          return (
+            <div>
+              <p className="text-sm font-semibold text-brand-ink">Shiprocket Shipment</p>
+              <p className="mt-1 text-sm text-brand-ink-soft">
+                AWB {activeShiprocketShipment.trackingNumber ?? "pending"} ·{" "}
+                <span className="text-brand-gold">{activeShiprocketShipment.status}</span>
+              </p>
+              <button
+                type="button"
+                onClick={() => handleCancelShipment(activeShiprocketShipment.id)}
+                disabled={isPending}
+                className="mt-2 rounded-md border border-brand-danger px-4 py-2 text-sm font-semibold text-brand-danger hover:bg-brand-danger hover:text-white disabled:opacity-50"
+              >
+                Cancel Shipment
+              </button>
+            </div>
+          );
+        }
+
+        return (
+          <div>
+            <p className="text-sm font-semibold text-brand-ink">Book Shipment via Shiprocket</p>
+            <p className="mt-1 text-xs text-brand-ink-soft">
+              Books the order with Shiprocket and auto-assigns a courier to generate a real AWB
+              (tracking number). Requires Shiprocket to be configured.
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <label className="flex items-center gap-2 text-sm text-brand-ink-soft">
+                Weight (kg)
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0.1"
+                  value={weightKg}
+                  onChange={(e) => setWeightKg(Number(e.target.value))}
+                  className="w-20 rounded-md border border-brand-cream-dark px-2 py-1.5 text-sm"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={handleShiprocketBook}
+                disabled={isPending}
+                className="rounded-md bg-brand-ink px-4 py-2 text-sm font-semibold text-brand-gold-soft hover:bg-brand-ink-soft disabled:opacity-50"
+              >
+                Book with Shiprocket
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+
       <div>
-        <p className="text-sm font-semibold text-brand-ink">Create Shipment</p>
+        <p className="text-sm font-semibold text-brand-ink">Or Enter Tracking Manually</p>
+        <p className="mt-1 text-xs text-brand-ink-soft">
+          Use this if you booked the shipment directly with a carrier outside Shiprocket.
+        </p>
         <div className="mt-2 flex flex-wrap gap-2">
           <input
             value={carrier}

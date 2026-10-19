@@ -109,6 +109,17 @@ Covers: password hashing, auth validation schemas, rate limiting, Razorpay signa
 4. The app verifies payments two ways: client-side callback (`/api/payments/verify`, for fast UX) and the server-to-server webhook (`/api/payments/webhook`, the authoritative source of truth — processes payments even if the client never calls back, e.g. tab closed mid-payment).
 5. Raw card numbers and CVVs are **never** handled or stored by this application — all card entry happens inside Razorpay's hosted Checkout widget.
 
+## Shipping: Real Carrier Tracking via Shiprocket (Optional)
+
+By default, admins enter tracking numbers manually (`src/lib/actions/admin/orders.ts` → `createShipmentAction`). To book real shipments and get live carrier tracking instead:
+
+1. Create a free account at [shiprocket.in](https://www.shiprocket.in) and add at least one **pickup location** in Settings → Pickup Addresses — note its exact label.
+2. Shiprocket's API auth uses your account email/password directly (not a static API key) to mint a short-lived bearer token. Set `SHIPROCKET_EMAIL` and `SHIPROCKET_PASSWORD` in your environment. Consider creating a dedicated API user instead of reusing your primary login (Shiprocket Settings → API).
+3. Set `SHIPROCKET_PICKUP_LOCATION` to the exact pickup location label from step 1 — it must match exactly.
+4. In the Shiprocket dashboard, configure a webhook (Settings → API → Webhook) pointing to `https://yourdomain.com/api/shipping/webhook`, with an `x-api-key` header value of your choosing. Set that same value as `SHIPROCKET_WEBHOOK_TOKEN`.
+5. In the admin order detail page, use **"Book with Shiprocket"** instead of manual entry — this creates the order on Shiprocket's side and auto-assigns a courier to generate a real AWB (tracking number), which then updates live as Shiprocket's webhook reports status changes (picked up → in transit → out for delivery → delivered).
+6. If Shiprocket isn't configured (env vars unset), manual tracking-number entry continues to work exactly as before — the two methods coexist.
+
 ## Image Hosting
 
 Product images are referenced by URL (see `next.config.ts` → `images.remotePatterns`, currently allowing Cloudinary, Unsplash, and placehold.co). To use Cloudinary in production:

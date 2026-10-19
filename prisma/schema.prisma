@@ -427,16 +427,30 @@ enum ShipmentStatus {
   DELIVERED
   FAILED_DELIVERY
   RETURNED
+  CANCELLED
+}
+
+enum ShipmentProvider {
+  MANUAL
+  SHIPROCKET
 }
 
 model Shipment {
-  id             String         @id @default(cuid())
+  id             String           @id @default(cuid())
   orderId        String
+  provider       ShipmentProvider @default(MANUAL)
   carrier        String?
   trackingNumber String?
-  status         ShipmentStatus @default(PENDING)
+  status         ShipmentStatus   @default(PENDING)
   shippedAt      DateTime?
   deliveredAt    DateTime?
+
+  // Shiprocket-specific identifiers, null for manually-entered shipments.
+  shiprocketOrderId    String?
+  shiprocketShipmentId String?
+  courierName          String?
+  trackingUrl          String?
+  lastWebhookPayload   Json?
 
   order Order @relation(fields: [orderId], references: [id])
 
@@ -444,6 +458,7 @@ model Shipment {
   updatedAt DateTime @updatedAt
 
   @@index([orderId])
+  @@index([shiprocketShipmentId])
 }
 
 // ---------- Site content / settings ----------

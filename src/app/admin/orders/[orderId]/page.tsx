@@ -79,12 +79,32 @@ export default async function AdminOrderDetailPage({ params }: PageProps<"/admin
               </div>
             </>
           )}
+
+          {order.shipments.length > 0 && (
+            <>
+              <h2 className="mt-6 font-semibold text-brand-ink">Shipments</h2>
+              <div className="mt-2 space-y-1 text-sm text-brand-ink-soft">
+                {order.shipments.map((s) => (
+                  <p key={s.id}>
+                    {s.provider === "SHIPROCKET" ? "Shiprocket" : "Manual"} · {s.courierName ?? s.carrier ?? "—"} ·{" "}
+                    {s.trackingNumber ?? "no AWB yet"} · <span className="text-brand-gold">{s.status}</span>
+                  </p>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         <OrderManager
           orderId={order.id}
           currentStatus={order.status}
           capturedAmount={capturedPayment ? Number(capturedPayment.amount) : null}
+          shipments={order.shipments.map((s) => ({
+            id: s.id,
+            provider: s.provider,
+            status: s.status,
+            trackingNumber: s.trackingNumber,
+          }))}
         />
       </div>
     </div>
