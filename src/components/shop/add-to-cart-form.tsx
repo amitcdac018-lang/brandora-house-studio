@@ -51,7 +51,7 @@ export function AddToCartForm({ productId, variants }: { productId: string; vari
       } else {
         setMessage({ type: "success", text: "Added to cart." });
         incrementItemCount(1);
-        notify("Added to your bag", "success");
+        notify("Added to your bag", "success", { href: "/cart", label: "View Cart →" });
       }
     });
   }

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type FilterOption = { slug: string; name: string };
 
 export function ShopFilters({
@@ -24,10 +26,26 @@ export function ShopFilters({
   const selectedSizes = selected("size");
   const selectedColors = selected("color");
 
+  const hasActiveFilters =
+    selectedBrands.length > 0 ||
+    selectedCategories.length > 0 ||
+    selectedSizes.length > 0 ||
+    selectedColors.length > 0 ||
+    Boolean(searchParams.minPrice) ||
+    Boolean(searchParams.maxPrice);
+
+  const clearFiltersHref = searchParams.q ? `/shop?q=${encodeURIComponent(String(searchParams.q))}` : "/shop";
+
   return (
     <form method="get" className="space-y-6 text-sm">
       {searchParams.q && (
         <input type="hidden" name="q" value={String(searchParams.q)} />
+      )}
+
+      {hasActiveFilters && (
+        <Link href={clearFiltersHref} className="inline-block text-xs font-medium text-brand-gold hover:underline">
+          Clear all filters
+        </Link>
       )}
 
       <FilterGroup title="Brand">

@@ -1,14 +1,15 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
-type Toast = { id: number; message: string; type: "success" | "error" };
+type Toast = { id: number; message: string; type: "success" | "error"; action?: { href: string; label: string } };
 
 type CartUiContextValue = {
   itemCount: number;
   setItemCount: (count: number) => void;
   incrementItemCount: (by: number) => void;
-  notify: (message: string, type?: Toast["type"]) => void;
+  notify: (message: string, type?: Toast["type"], action?: Toast["action"]) => void;
 };
 
 const CartUiContext = createContext<CartUiContextValue | null>(null);
@@ -37,9 +38,9 @@ export function CartUiProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const notify = useCallback((message: string, type: Toast["type"] = "success") => {
+  const notify = useCallback((message: string, type: Toast["type"] = "success", action?: Toast["action"]) => {
     const id = nextToastId++;
-    setToasts((prev) => [...prev, { id, message, type }]);
+    setToasts((prev) => [...prev, { id, message, type, action }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, TOAST_DURATION_MS);
@@ -65,11 +66,16 @@ export function CartUiProvider({ children }: { children: React.ReactNode }) {
           <div
             key={toast.id}
             role="status"
-            className={`pointer-events-auto rounded-lg px-4 py-3 text-sm font-medium shadow-lg ${
+            className={`pointer-events-auto flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium shadow-lg ${
               toast.type === "success" ? "bg-brand-ink text-brand-gold-soft" : "bg-brand-danger text-white"
             }`}
           >
-            {toast.message}
+            <span>{toast.message}</span>
+            {toast.action && (
+              <Link href={toast.action.href} className="shrink-0 underline hover:no-underline">
+                {toast.action.label}
+              </Link>
+            )}
           </div>
         ))}
       </div>
