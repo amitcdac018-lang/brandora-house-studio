@@ -137,7 +137,9 @@ export async function createShiprocketShipmentAction(input: unknown) {
         pincode: order.address.postalCode,
         state: order.address.state,
         phone: shiprocketPhone,
-        email: order.user.email,
+        // Shiprocket requires an email; phone-only accounts won't have one, so fall back to a
+        // clearly-marked placeholder rather than sending an empty/invalid value.
+        email: order.user.email ?? `no-email-${order.user.id}@brandorahousestudio.com`,
       },
       items: order.items.map((item) => ({
         name: item.nameSnapshot,

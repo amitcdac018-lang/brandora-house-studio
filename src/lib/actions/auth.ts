@@ -32,3 +32,16 @@ export async function signInAction(input: unknown) {
     return { error: "Invalid email or password." };
   }
 }
+
+export async function signInWithOtpAction(input: { phone: string; ticket: string }) {
+  try {
+    await signIn("otp", {
+      phone: input.phone,
+      ticket: input.ticket,
+      redirect: false,
+    });
+    return { ok: true };
+  } catch {
+    return { error: "Could not sign you in. Please request a new code and try again." };
+  }
+}

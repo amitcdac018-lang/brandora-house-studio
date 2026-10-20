@@ -31,3 +31,23 @@ export const resetPasswordSchema = z.object({
   password: passwordSchema,
 });
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
+export const sendOtpSchema = z.object({
+  phone: z
+    .string()
+    .trim()
+    .regex(/^[0-9+\-\s]{7,16}$/, "Enter a valid phone number"),
+});
+export type SendOtpInput = z.infer<typeof sendOtpSchema>;
+
+export const verifyOtpSchema = z.object({
+  phone: z
+    .string()
+    .trim()
+    .regex(/^[0-9+\-\s]{7,16}$/, "Enter a valid phone number"),
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d{4,8}$/, "Enter the code you received"),
+});
+export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;

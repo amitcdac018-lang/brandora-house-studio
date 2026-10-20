@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { LoginForm } from "@/components/auth/login-form";
+import { LoginTabs } from "@/components/auth/login-tabs";
 
 export const metadata: Metadata = { title: "Sign In" };
 
@@ -11,7 +11,7 @@ export default function LoginPage() {
       <p className="mt-1 text-sm text-brand-ink-soft">Sign in to continue to Brandora House Studio.</p>
       <div className="mt-8 rounded-xl border border-brand-cream-dark bg-white p-6">
         <Suspense fallback={null}>
-          <LoginForm />
+          <LoginTabs />
         </Suspense>
       </div>
     </div>
