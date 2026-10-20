@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
@@ -17,9 +18,19 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)]">
-      <AdminSidebar />
-      <main className="flex-1 bg-brand-cream p-6 lg:p-8">{children}</main>
+    <div className="flex min-h-screen flex-col">
+      <div className="flex items-center justify-between bg-brand-ink px-4 py-2 text-xs text-brand-cream/80 sm:px-6">
+        <span>
+          Signed in as <span className="font-medium text-brand-gold-soft">{session.user.email}</span> · Admin Mode
+        </span>
+        <Link href="/" className="font-medium text-brand-gold hover:underline">
+          View storefront →
+        </Link>
+      </div>
+      <div className="flex flex-1">
+        <AdminSidebar />
+        <main className="flex-1 bg-brand-cream p-6 lg:p-8">{children}</main>
+      </div>
     </div>
   );
 }

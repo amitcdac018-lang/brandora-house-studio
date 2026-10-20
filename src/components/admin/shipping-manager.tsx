@@ -20,6 +20,7 @@ export function ShippingManager({ initialRules }: { initialRules: Rule[] }) {
   const [form, setForm] = useState({ name: "", minOrderValue: "0", maxOrderValue: "", charge: "0", estimatedDays: "5" });
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   function handleCreate() {
     setError(null);
@@ -39,10 +40,21 @@ export function ShippingManager({ initialRules }: { initialRules: Rule[] }) {
     });
   }
 
+  function handleToggle(id: string, nextActive: boolean) {
+    setBusyId(id);
+    startTransition(async () => {
+      await toggleShippingRuleAction(id, nextActive);
+      setRules((prev) => prev.map((r) => (r.id === id ? { ...r, isActive: nextActive } : r)));
+      setBusyId(null);
+    });
+  }
+
   function handleDelete(id: string) {
+    setBusyId(id);
     startTransition(async () => {
       await deleteShippingRuleAction(id);
       setRules((prev) => prev.filter((r) => r.id !== id));
+      setBusyId(null);
     });
   }
 
@@ -64,18 +76,21 @@ export function ShippingManager({ initialRules }: { initialRules: Rule[] }) {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() =>
-                  startTransition(() => {
-                    void toggleShippingRuleAction(rule.id, !rule.isActive);
-                  })
-                }
-                className={`rounded-full px-2 py-0.5 text-xs ${
+                onClick={() => handleToggle(rule.id, !rule.isActive)}
+                disabled={busyId === rule.id}
+                className={`rounded-full px-2 py-0.5 text-xs disabled:opacity-50 ${
                   rule.isActive ? "bg-brand-success/10 text-brand-success" : "bg-brand-danger/10 text-brand-danger"
                 }`}
               >
-                {rule.isActive ? "Active" : "Inactive"}
+                {busyId === rule.id ? "..." : rule.isActive ? "Active" : "Inactive"}
               </button>
-              <button type="button" onClick={() => handleDelete(rule.id)} className="text-brand-danger">
+              <button
+                type="button"
+                onClick={() => handleDelete(rule.id)}
+                disabled={busyId === rule.id}
+                aria-label={`Delete shipping rule ${rule.name}`}
+                className="text-brand-danger disabled:opacity-50"
+              >
                 <Trash2 className="h-4 w-4" />
               </button>
             </div>

@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { ShoppingBag, User } from "lucide-react";
 import { BrandLogo } from "./brand-logo";
 import { InstagramIcon } from "@/components/icons/instagram-icon";
@@ -13,6 +17,35 @@ const navLinks = [
   { href: "/contact", label: "Contact" },
 ];
 
+function NavLinks() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentBrand = searchParams.get("brand");
+
+  return (
+    <>
+      {navLinks.map((link) => {
+        const [linkPath, linkQuery] = link.href.split("?");
+        const linkBrand = linkQuery ? new URLSearchParams(linkQuery).get("brand") : null;
+        const active = pathname === linkPath && currentBrand === linkBrand;
+
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            aria-current={active ? "page" : undefined}
+            className={`transition-colors ${
+              active ? "font-semibold text-brand-gold" : "text-brand-ink-soft hover:text-brand-gold"
+            }`}
+          >
+            {link.label}
+          </Link>
+        );
+      })}
+    </>
+  );
+}
+
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-brand-cream-dark bg-brand-cream/95 backdrop-blur supports-[backdrop-filter]:bg-brand-cream/80">
@@ -20,15 +53,9 @@ export function SiteHeader() {
         <BrandLogo />
 
         <nav aria-label="Primary" className="hidden md:flex items-center gap-6 text-sm font-medium">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-brand-ink-soft transition-colors hover:text-brand-gold"
-            >
-              {link.label}
-            </Link>
-          ))}
+          <Suspense fallback={null}>
+            <NavLinks />
+          </Suspense>
         </nav>
 
         <div className="flex items-center gap-4">

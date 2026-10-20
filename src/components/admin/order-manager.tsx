@@ -27,6 +27,8 @@ type ShipmentSummary = {
   trackingNumber: string | null;
 };
 
+type ActiveAction = "status" | "ship" | "shiprocket" | "cancel" | "refund" | null;
+
 export function OrderManager({
   orderId,
   currentStatus,
@@ -45,29 +47,35 @@ export function OrderManager({
   const [refundAmount, setRefundAmount] = useState(capturedAmount ?? 0);
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [activeAction, setActiveAction] = useState<ActiveAction>(null);
 
   function handleStatusUpdate() {
     setMessage(null);
+    setActiveAction("status");
     startTransition(async () => {
       const result = await updateOrderStatusAction({ orderId, status });
       setMessage(
         result?.error ? { type: "error", text: result.error } : { type: "success", text: "Status updated." }
       );
+      setActiveAction(null);
     });
   }
 
   function handleShip() {
     setMessage(null);
+    setActiveAction("ship");
     startTransition(async () => {
       const result = await createShipmentAction({ orderId, carrier, trackingNumber });
       setMessage(
         result?.error ? { type: "error", text: result.error } : { type: "success", text: "Shipment created." }
       );
+      setActiveAction(null);
     });
   }
 
   function handleShiprocketBook() {
     setMessage(null);
+    setActiveAction("shiprocket");
     startTransition(async () => {
       const result = await createShiprocketShipmentAction({ orderId, weightKg });
       setMessage(
@@ -75,26 +83,31 @@ export function OrderManager({
           ? { type: "error", text: result.error }
           : { type: "success", text: `Booked with ${result.courier} — AWB ${result.awb}` }
       );
+      setActiveAction(null);
     });
   }
 
   function handleCancelShipment(shipmentId: string) {
     setMessage(null);
+    setActiveAction("cancel");
     startTransition(async () => {
       const result = await cancelShiprocketShipmentAction({ shipmentId });
       setMessage(
         result?.error ? { type: "error", text: result.error } : { type: "success", text: "Shipment cancelled." }
       );
+      setActiveAction(null);
     });
   }
 
   function handleRefund() {
     setMessage(null);
+    setActiveAction("refund");
     startTransition(async () => {
       const result = await refundOrderAction({ orderId, amount: refundAmount });
       setMessage(
         result?.error ? { type: "error", text: result.error } : { type: "success", text: "Refund initiated." }
       );
+      setActiveAction(null);
     });
   }
 
@@ -120,7 +133,7 @@ export function OrderManager({
             disabled={isPending}
             className="rounded-md bg-brand-ink px-4 py-2 text-sm font-semibold text-brand-gold-soft hover:bg-brand-ink-soft disabled:opacity-50"
           >
-            Update
+            {activeAction === "status" ? "Updating..." : "Update"}
           </button>
         </div>
       </div>
@@ -144,7 +157,7 @@ export function OrderManager({
                 disabled={isPending}
                 className="mt-2 rounded-md border border-brand-danger px-4 py-2 text-sm font-semibold text-brand-danger hover:bg-brand-danger hover:text-white disabled:opacity-50"
               >
-                Cancel Shipment
+                {activeAction === "cancel" ? "Cancelling..." : "Cancel Shipment"}
               </button>
             </div>
           );
@@ -175,7 +188,7 @@ export function OrderManager({
                 disabled={isPending}
                 className="rounded-md bg-brand-ink px-4 py-2 text-sm font-semibold text-brand-gold-soft hover:bg-brand-ink-soft disabled:opacity-50"
               >
-                Book with Shiprocket
+                {activeAction === "shiprocket" ? "Booking..." : "Book with Shiprocket"}
               </button>
             </div>
           </div>
@@ -206,7 +219,7 @@ export function OrderManager({
             disabled={isPending || !carrier || !trackingNumber}
             className="rounded-md bg-brand-ink px-4 py-2 text-sm font-semibold text-brand-gold-soft hover:bg-brand-ink-soft disabled:opacity-50"
           >
-            Mark Shipped
+            {activeAction === "ship" ? "Saving..." : "Mark Shipped"}
           </button>
         </div>
       </div>
@@ -228,7 +241,7 @@ export function OrderManager({
               disabled={isPending}
               className="rounded-md bg-brand-danger px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
             >
-              Refund
+              {activeAction === "refund" ? "Refunding..." : "Refund"}
             </button>
           </div>
         </div>

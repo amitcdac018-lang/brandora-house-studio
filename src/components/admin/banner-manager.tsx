@@ -19,6 +19,7 @@ export function BannerManager({ initialBanners }: { initialBanners: Banner[] }) 
   const [form, setForm] = useState({ title: "", subtitle: "", imageUrl: "", linkUrl: "" });
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   function handleCreate() {
     setError(null);
@@ -37,10 +38,21 @@ export function BannerManager({ initialBanners }: { initialBanners: Banner[] }) 
     });
   }
 
+  function handleToggle(id: string, nextActive: boolean) {
+    setBusyId(id);
+    startTransition(async () => {
+      await toggleBannerActiveAction(id, nextActive);
+      setBanners((prev) => prev.map((b) => (b.id === id ? { ...b, isActive: nextActive } : b)));
+      setBusyId(null);
+    });
+  }
+
   function handleDelete(id: string) {
+    setBusyId(id);
     startTransition(async () => {
       await deleteBannerAction(id);
       setBanners((prev) => prev.filter((b) => b.id !== id));
+      setBusyId(null);
     });
   }
 
@@ -57,18 +69,21 @@ export function BannerManager({ initialBanners }: { initialBanners: Banner[] }) 
               <div className="mt-2 flex items-center justify-between">
                 <button
                   type="button"
-                  onClick={() =>
-                    startTransition(() => {
-                      void toggleBannerActiveAction(banner.id, !banner.isActive);
-                    })
-                  }
-                  className={`rounded-full px-2 py-0.5 text-xs ${
+                  onClick={() => handleToggle(banner.id, !banner.isActive)}
+                  disabled={busyId === banner.id}
+                  className={`rounded-full px-2 py-0.5 text-xs disabled:opacity-50 ${
                     banner.isActive ? "bg-brand-success/10 text-brand-success" : "bg-brand-danger/10 text-brand-danger"
                   }`}
                 >
-                  {banner.isActive ? "Active" : "Inactive"}
+                  {busyId === banner.id ? "..." : banner.isActive ? "Active" : "Inactive"}
                 </button>
-                <button type="button" onClick={() => handleDelete(banner.id)} className="text-brand-danger">
+                <button
+                  type="button"
+                  onClick={() => handleDelete(banner.id)}
+                  disabled={busyId === banner.id}
+                  aria-label={`Delete banner ${banner.title}`}
+                  className="text-brand-danger disabled:opacity-50"
+                >
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>

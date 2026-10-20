@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { SignOutButton } from "@/components/account/sign-out-button";
 
 export const metadata: Metadata = { title: "My Account" };
 
@@ -46,12 +47,7 @@ export default async function AccountPage() {
         }}
         className="mt-8"
       >
-        <button
-          type="submit"
-          className="rounded-md border border-brand-cream-dark px-5 py-2.5 text-sm font-semibold text-brand-ink hover:border-brand-danger hover:text-brand-danger"
-        >
-          Sign Out
-        </button>
+        <SignOutButton />
       </form>
     </div>
   );

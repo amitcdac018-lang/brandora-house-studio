@@ -19,6 +19,7 @@ export function TaxonomyManager({
   const [slug, setSlug] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   function handleCreate() {
     setError(null);
@@ -34,6 +35,14 @@ export function TaxonomyManager({
     });
   }
 
+  function handleToggle(id: string, nextActive: boolean) {
+    setTogglingId(id);
+    startTransition(async () => {
+      await onToggle(id, nextActive);
+      setTogglingId(null);
+    });
+  }
+
   return (
     <div className="rounded-xl border border-brand-cream-dark bg-white p-5">
       <h2 className="font-semibold text-brand-ink">{title}</h2>
@@ -44,16 +53,13 @@ export function TaxonomyManager({
             <span className="text-brand-ink">{item.name}</span>
             <button
               type="button"
-              onClick={() =>
-                startTransition(() => {
-                  void onToggle(item.id, !item.isActive);
-                })
-              }
-              className={`rounded-full px-2 py-0.5 text-xs ${
+              onClick={() => handleToggle(item.id, !item.isActive)}
+              disabled={togglingId === item.id}
+              className={`rounded-full px-2 py-0.5 text-xs disabled:opacity-50 ${
                 item.isActive ? "bg-brand-success/10 text-brand-success" : "bg-brand-danger/10 text-brand-danger"
               }`}
             >
-              {item.isActive ? "Active" : "Inactive"}
+              {togglingId === item.id ? "Updating..." : item.isActive ? "Active" : "Inactive"}
             </button>
           </div>
         ))}
