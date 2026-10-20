@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/guards";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { parseNominatimAddress, type NominatimReverseResponse } from "@/lib/geocoding/nominatim";
 
 /**
  * Reverse-geocodes GPS coordinates to a postal address via OpenStreetMap's Nominatim —
@@ -45,35 +46,14 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Could not resolve your location." }, { status: 502 });
     }
 
-    const data = (await response.json()) as {
-      address?: {
-        road?: string;
-        suburb?: string;
-        neighbourhood?: string;
-        city?: string;
-        town?: string;
-        village?: string;
-        state?: string;
-        postcode?: string;
-        country_code?: string;
-      };
-      display_name?: string;
-    };
+    const data = (await response.json()) as NominatimReverseResponse;
+    const parsed = parseNominatimAddress(data);
 
-    const address = data.address;
-    if (!address) {
+    if (!parsed) {
       return NextResponse.json({ error: "No address found for this location." }, { status: 404 });
     }
 
-    const line1 = [address.road, address.suburb ?? address.neighbourhood].filter(Boolean).join(", ");
-
-    return NextResponse.json({
-      line1: line1 || data.display_name || "",
-      city: address.city ?? address.town ?? address.village ?? "",
-      state: address.state ?? "",
-      postalCode: address.postcode ?? "",
-      country: address.country_code?.toUpperCase() ?? "IN",
-    });
+    return NextResponse.json(parsed);
   } catch {
     return NextResponse.json({ error: "Could not resolve your location." }, { status: 502 });
   }
