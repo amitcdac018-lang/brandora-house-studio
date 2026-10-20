@@ -25,12 +25,30 @@ const contentSecurityPolicy = [
   "frame-ancestors 'none'",
 ].join("; ");
 
-function applySecurityHeaders(response: NextResponse): NextResponse {
-  response.headers.set("Content-Security-Policy", contentSecurityPolicy);
-  response.headers.set("X-Frame-Options", "DENY");
-  response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(self)");
+const SECURITY_HEADERS: [string, string][] = [
+  ["Content-Security-Policy", contentSecurityPolicy],
+  ["X-Frame-Options", "DENY"],
+  ["X-Content-Type-Options", "nosniff"],
+  ["Referrer-Policy", "strict-origin-when-cross-origin"],
+  ["Permissions-Policy", "camera=(), microphone=(), geolocation=(self)"],
+];
+
+/**
+ * Per Next.js's own documented pattern for setting headers from Proxy (see
+ * content-security-policy.md), headers must be set on BOTH the request headers passed into
+ * NextResponse.next()/redirect() AND the response's own headers — setting only the latter
+ * (what we tried first) was silently dropped for dynamically-rendered routes in production.
+ */
+function withSecurityHeaders(request: NextRequest, build: (requestHeaders: Headers) => NextResponse): NextResponse {
+  const requestHeaders = new Headers(request.headers);
+  for (const [key, value] of SECURITY_HEADERS) {
+    requestHeaders.set(key, value);
+  }
+
+  const response = build(requestHeaders);
+  for (const [key, value] of SECURITY_HEADERS) {
+    response.headers.set(key, value);
+  }
   return response;
 }
 
@@ -38,7 +56,9 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (!pathname.startsWith(ADMIN_PREFIX) && !pathname.startsWith(ACCOUNT_PREFIX)) {
-    return applySecurityHeaders(NextResponse.next());
+    return withSecurityHeaders(request, (requestHeaders) =>
+      NextResponse.next({ request: { headers: requestHeaders } })
+    );
   }
 
   const session = await auth();
@@ -46,14 +66,16 @@ export async function proxy(request: NextRequest) {
   if (!session?.user) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
-    return applySecurityHeaders(NextResponse.redirect(loginUrl));
+    return withSecurityHeaders(request, () => NextResponse.redirect(loginUrl));
   }
 
   if (pathname.startsWith(ADMIN_PREFIX) && session.user.role !== "ADMIN") {
-    return applySecurityHeaders(NextResponse.redirect(new URL("/", request.url)));
+    return withSecurityHeaders(request, () => NextResponse.redirect(new URL("/", request.url)));
   }
 
-  return applySecurityHeaders(NextResponse.next());
+  return withSecurityHeaders(request, (requestHeaders) =>
+    NextResponse.next({ request: { headers: requestHeaders } })
+  );
 }
 
 export const config = {
