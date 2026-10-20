@@ -8,6 +8,23 @@ function getEnv(name: string): string {
   return value;
 }
 
+/**
+ * Shiprocket requires a bare 10-digit Indian mobile number for billing_phone — no country
+ * code, spaces, or punctuation. Our own address form accepts a looser format (it supports
+ * other use cases), so normalize here rather than tightening validation app-wide.
+ */
+export function toShiprocketPhone(rawPhone: string): string | null {
+  const digitsOnly = rawPhone.replace(/\D/g, "");
+  const withoutCountryCode =
+    digitsOnly.length === 12 && digitsOnly.startsWith("91")
+      ? digitsOnly.slice(2)
+      : digitsOnly.length === 11 && digitsOnly.startsWith("0")
+        ? digitsOnly.slice(1)
+        : digitsOnly;
+
+  return /^[6-9]\d{9}$/.test(withoutCountryCode) ? withoutCountryCode : null;
+}
+
 type ShiprocketTokenCache = { token: string; expiresAt: number } | null;
 let tokenCache: ShiprocketTokenCache = null;
 
@@ -55,14 +72,32 @@ async function shiprocketFetch<T>(path: string, init: RequestInit = {}): Promise
   const body = await response.json().catch(() => null);
 
   if (!response.ok) {
-    const message =
-      body && typeof body === "object" && "message" in body
-        ? String((body as { message: unknown }).message)
-        : `HTTP ${response.status}`;
-    throw new Error(`Shiprocket API error: ${message}`);
+    throw new Error(`Shiprocket API error: ${describeShiprocketErrorBody(body, response.status)}`);
   }
 
   return body as T;
+}
+
+/**
+ * Shiprocket's top-level "message" is often a generic "Oops! Invalid Data." while the actual
+ * field-level reason lives in a nested "errors" object (e.g. { billing_phone: ["..."] }).
+ * Surface that detail so admins see something actionable instead of a generic failure.
+ */
+function describeShiprocketErrorBody(body: unknown, status: number): string {
+  if (body && typeof body === "object") {
+    const typed = body as { message?: unknown; errors?: Record<string, unknown> };
+    const fieldErrors = typed.errors && typeof typed.errors === "object" ? typed.errors : null;
+
+    if (fieldErrors) {
+      const details = Object.entries(fieldErrors)
+        .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(", ") : String(msgs)}`)
+        .join("; ");
+      if (details) return details;
+    }
+
+    if (typeof typed.message === "string") return typed.message;
+  }
+  return `HTTP ${status}`;
 }
 
 export type ShiprocketOrderItem = {

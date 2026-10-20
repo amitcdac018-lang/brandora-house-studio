@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getRazorpayClient } from "@/lib/payments/razorpay";
-import { createShiprocketOrder, assignAwb, cancelShiprocketOrder } from "@/lib/shipping/shiprocket/client";
+import {
+  createShiprocketOrder,
+  assignAwb,
+  cancelShiprocketOrder,
+  toShiprocketPhone,
+} from "@/lib/shipping/shiprocket/client";
 import { z } from "zod";
 
 const orderStatusValues = [
@@ -109,6 +114,13 @@ export async function createShiprocketShipmentAction(input: unknown) {
     return { error: "Shiprocket pickup location is not configured (SHIPROCKET_PICKUP_LOCATION)." };
   }
 
+  const shiprocketPhone = toShiprocketPhone(order.address.phone);
+  if (!shiprocketPhone) {
+    return {
+      error: `This order's phone number ("${order.address.phone}") isn't a valid 10-digit Indian mobile number, which Shiprocket requires. Ask the customer to update their address, or use manual tracking entry instead.`,
+    };
+  }
+
   try {
     const created = await createShiprocketOrder({
       orderNumber: order.orderNumber,
@@ -120,7 +132,7 @@ export async function createShiprocketShipmentAction(input: unknown) {
         city: order.address.city,
         pincode: order.address.postalCode,
         state: order.address.state,
-        phone: order.address.phone,
+        phone: shiprocketPhone,
         email: order.user.email,
       },
       items: order.items.map((item) => ({
