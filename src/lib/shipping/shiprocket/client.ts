@@ -142,7 +142,7 @@ function formatOrderDate(date: Date): string {
 export async function createShiprocketOrder(
   input: CreateShiprocketOrderInput
 ): Promise<CreateShiprocketOrderResult> {
-  return shiprocketFetch<CreateShiprocketOrderResult>("/orders/create/adhoc", {
+  const raw = await shiprocketFetch<Record<string, unknown>>("/orders/create/adhoc", {
     method: "POST",
     body: JSON.stringify({
       order_id: input.orderNumber,
@@ -167,6 +167,27 @@ export async function createShiprocketOrder(
       weight: input.dimensions.weightKg,
     }),
   });
+
+  // TEMPORARY diagnostic — Shiprocket's response shape for order_id/shipment_id has been
+  // inconsistent across accounts/API versions in practice. Log the raw shape once so we can
+  // confirm the real field names/paths instead of guessing, then remove this.
+  console.log("Shiprocket create order raw response:", JSON.stringify(raw));
+
+  const orderId = raw.order_id;
+  const shipmentId = raw.shipment_id;
+
+  if (orderId === undefined || shipmentId === undefined) {
+    throw new Error(
+      `Shiprocket order created but response is missing order_id/shipment_id. Raw response: ${JSON.stringify(raw)}`
+    );
+  }
+
+  return {
+    order_id: Number(orderId),
+    shipment_id: Number(shipmentId),
+    status: String(raw.status ?? ""),
+    status_code: Number(raw.status_code ?? 0),
+  };
 }
 
 export type AssignAwbResult = {
