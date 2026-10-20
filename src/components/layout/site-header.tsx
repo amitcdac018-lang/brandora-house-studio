@@ -7,6 +7,7 @@ import { ShoppingBag, User } from "lucide-react";
 import { BrandLogo } from "./brand-logo";
 import { InstagramIcon } from "@/components/icons/instagram-icon";
 import { siteConfig } from "@/lib/site-config";
+import { useCartUi } from "@/components/cart/cart-ui-context";
 
 const navLinks = [
   { href: "/shop", label: "Shop" },
@@ -46,6 +47,28 @@ function NavLinks() {
   );
 }
 
+function CartLink() {
+  const { itemCount } = useCartUi();
+
+  return (
+    <Link
+      href="/cart"
+      aria-label={`Shopping cart${itemCount > 0 ? `, ${itemCount} item${itemCount === 1 ? "" : "s"}` : ""}`}
+      className="relative text-brand-ink-soft transition-colors hover:text-brand-gold"
+    >
+      <ShoppingBag className="h-5 w-5" />
+      {itemCount > 0 && (
+        <span
+          aria-hidden="true"
+          className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-gold px-1 text-[10px] font-semibold text-brand-ink"
+        >
+          {itemCount > 99 ? "99+" : itemCount}
+        </span>
+      )}
+    </Link>
+  );
+}
+
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-brand-cream-dark bg-brand-cream/95 backdrop-blur supports-[backdrop-filter]:bg-brand-cream/80">
@@ -75,13 +98,7 @@ export function SiteHeader() {
           >
             <User className="h-5 w-5" />
           </Link>
-          <Link
-            href="/cart"
-            aria-label="Shopping cart"
-            className="text-brand-ink-soft transition-colors hover:text-brand-gold"
-          >
-            <ShoppingBag className="h-5 w-5" />
-          </Link>
+          <CartLink />
         </div>
       </div>
     </header>

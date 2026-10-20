@@ -5,11 +5,40 @@ import { auth } from "@/lib/auth";
 const ADMIN_PREFIX = "/admin";
 const ACCOUNT_PREFIX = "/account";
 
+// On Vercel, a dynamically-rendered route executes as a Function, and the Function's own
+// response headers take precedence over headers set in next.config.ts (and even vercel.json)
+// for that response — both are silently dropped. The proxy runs for every matched request
+// regardless of static/dynamic rendering, so it's the one place that reliably applies these
+// headers everywhere. next.config.ts's headers() is left in place too since it still covers
+// genuinely static routes and local/non-Vercel hosting.
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: https://res.cloudinary.com https://images.unsplash.com https://placehold.co",
+  "connect-src 'self' https://checkout.razorpay.com https://api.razorpay.com https://lumberjack.razorpay.com",
+  "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join("; ");
+
+function applySecurityHeaders(response: NextResponse): NextResponse {
+  response.headers.set("Content-Security-Policy", contentSecurityPolicy);
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(self)");
+  return response;
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (!pathname.startsWith(ADMIN_PREFIX) && !pathname.startsWith(ACCOUNT_PREFIX)) {
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next());
   }
 
   const session = await auth();
@@ -17,16 +46,20 @@ export async function proxy(request: NextRequest) {
   if (!session?.user) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(loginUrl);
+    return applySecurityHeaders(NextResponse.redirect(loginUrl));
   }
 
   if (pathname.startsWith(ADMIN_PREFIX) && session.user.role !== "ADMIN") {
-    return NextResponse.redirect(new URL("/", request.url));
+    return applySecurityHeaders(NextResponse.redirect(new URL("/", request.url)));
   }
 
-  return NextResponse.next();
+  return applySecurityHeaders(NextResponse.next());
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/account/:path*"],
+  matcher: [
+    // Run on every request except static assets, image optimization, and favicon —
+    // those are served directly and don't need these headers attached by the proxy.
+    "/((?!_next/static|_next/image|favicon.ico).*)",
+  ],
 };

@@ -21,3 +21,12 @@ export async function getCartWithItems(userId: string) {
     },
   });
 }
+
+/** Total item count (sum of quantities) for the header badge — avoids fetching full cart detail. */
+export async function getCartItemCount(userId: string): Promise<number> {
+  const result = await prisma.cartItem.aggregate({
+    where: { cart: { userId } },
+    _sum: { quantity: true },
+  });
+  return result._sum.quantity ?? 0;
+}

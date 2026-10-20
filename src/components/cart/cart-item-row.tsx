@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import { updateCartItemAction, removeCartItemAction } from "@/lib/actions/cart";
 import { formatPrice, discountedPrice } from "@/lib/format";
+import { useCartUi } from "./cart-ui-context";
 
 type CartItemData = {
   id: string;
@@ -28,6 +29,7 @@ type CartItemData = {
 export function CartItemRow({ item }: { item: CartItemData }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const { incrementItemCount } = useCartUi();
   const image = item.product.images[0];
   const unitPrice = item.variant.priceOverride
     ? Number(item.variant.priceOverride)
@@ -35,9 +37,14 @@ export function CartItemRow({ item }: { item: CartItemData }) {
 
   function handleQuantityChange(quantity: number) {
     setError(null);
+    const delta = quantity - item.quantity;
     startTransition(async () => {
       const result = await updateCartItemAction({ cartItemId: item.id, quantity });
-      if (result?.error) setError(result.error);
+      if (result?.error) {
+        setError(result.error);
+      } else {
+        incrementItemCount(delta);
+      }
     });
   }
 
@@ -45,7 +52,11 @@ export function CartItemRow({ item }: { item: CartItemData }) {
     setError(null);
     startTransition(async () => {
       const result = await removeCartItemAction({ cartItemId: item.id });
-      if (result?.error) setError(result.error);
+      if (result?.error) {
+        setError(result.error);
+      } else {
+        incrementItemCount(-item.quantity);
+      }
     });
   }
 

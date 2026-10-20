@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { addToCartAction } from "@/lib/actions/cart";
+import { useCartUi } from "@/components/cart/cart-ui-context";
 
 type Variant = {
   id: string;
@@ -13,6 +14,7 @@ type Variant = {
 
 export function AddToCartForm({ productId, variants }: { productId: string; variants: Variant[] }) {
   const router = useRouter();
+  const { incrementItemCount, notify } = useCartUi();
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
 
@@ -45,8 +47,11 @@ export function AddToCartForm({ productId, variants }: { productId: string; vari
           return;
         }
         setMessage({ type: "error", text: result.error });
+        notify(result.error, "error");
       } else {
         setMessage({ type: "success", text: "Added to cart." });
+        incrementItemCount(1);
+        notify("Added to your bag", "success");
       }
     });
   }
