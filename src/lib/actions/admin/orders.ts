@@ -53,6 +53,8 @@ export async function updateOrderStatusAction(input: unknown) {
 
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath("/admin/orders");
+  revalidatePath(`/account/orders/${orderId}`);
+  revalidatePath("/account/orders");
   return { ok: true };
 }
 
@@ -71,7 +73,7 @@ export async function createShipmentAction(input: unknown) {
 
   await prisma.$transaction([
     prisma.shipment.create({
-      data: { orderId, carrier, trackingNumber, status: "SHIPPED", shippedAt: new Date() },
+      data: { orderId, carrier, courierName: carrier, trackingNumber, status: "SHIPPED", shippedAt: new Date() },
     }),
     prisma.order.update({ where: { id: orderId }, data: { status: "SHIPPED" } }),
     prisma.auditLog.create({
@@ -80,6 +82,8 @@ export async function createShipmentAction(input: unknown) {
   ]);
 
   revalidatePath(`/admin/orders/${orderId}`);
+  revalidatePath(`/account/orders/${orderId}`);
+  revalidatePath("/account/orders");
   return { ok: true };
 }
 
@@ -175,6 +179,8 @@ export async function createShiprocketShipmentAction(input: unknown) {
     ]);
 
     revalidatePath(`/admin/orders/${orderId}`);
+    revalidatePath(`/account/orders/${orderId}`);
+    revalidatePath("/account/orders");
     return { ok: true, awb: awbResult.awb_code, courier: awbResult.courier_name };
   } catch (error) {
     return {
@@ -215,6 +221,8 @@ export async function cancelShiprocketShipmentAction(input: unknown) {
     ]);
 
     revalidatePath(`/admin/orders/${shipment.orderId}`);
+    revalidatePath(`/account/orders/${shipment.orderId}`);
+    revalidatePath("/account/orders");
     return { ok: true };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Could not cancel shipment." };
