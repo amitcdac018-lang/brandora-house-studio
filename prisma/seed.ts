@@ -3,7 +3,23 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-const PLACEHOLDER_IMAGE = "https://placehold.co/800x800/14110f/c9a24b?text=Brandora";
+// Real, freely-licensed shoe photos from Unsplash (hotlinked directly, no API key needed) —
+// used purely as visual placeholders for sample/demo products until real product photography
+// is uploaded. Rotated across products so the shop doesn't show the same image repeatedly.
+const SAMPLE_SHOE_IMAGES = [
+  "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&h=800&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&h=800&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=800&h=800&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=800&h=800&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1600269452121-4f2416e55c28?w=800&h=800&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=800&h=800&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?w=800&h=800&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1465479423260-c4afc24172c6?w=800&h=800&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1562183241-b937e95585b6?w=800&h=800&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800&h=800&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1600804340584-c7db2eacf0bf?w=800&h=800&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1518002171953-a080ee817e1f?w=800&h=800&fit=crop&q=80",
+];
 
 async function main() {
   console.log("Seeding Brandora House Studio (development sample data)...");
@@ -98,7 +114,13 @@ async function main() {
           avgRating: 4.2,
           ratingCount: 10 + productIndex,
           images: {
-            create: [{ url: PLACEHOLDER_IMAGE, altText: `${name} placeholder image`, position: 0 }],
+            create: [
+              {
+                url: SAMPLE_SHOE_IMAGES[(productIndex - 1) % SAMPLE_SHOE_IMAGES.length],
+                altText: name,
+                position: 0,
+              },
+            ],
           },
           variants: {
             create: sizes.flatMap((size, sizeIdx) =>
