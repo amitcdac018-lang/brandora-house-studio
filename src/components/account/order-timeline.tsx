@@ -43,31 +43,62 @@ export function OrderTimeline({
   ];
 
   return (
-    <div className="flex items-start">
-      {steps.map((step, index) => (
-        <div key={step.label} className="flex flex-1 items-center last:flex-none">
-          <div className="flex flex-col items-center text-center">
-            {step.reached ? (
-              <CheckCircle2 className="h-6 w-6 text-brand-success" />
-            ) : (
-              <Circle className="h-6 w-6 text-brand-cream-dark" />
-            )}
-            <p className={`mt-2 text-xs font-medium ${step.reached ? "text-brand-ink" : "text-brand-ink-soft/60"}`}>
-              {step.label}
-            </p>
-            <p className="mt-0.5 text-[11px] text-brand-ink-soft/60">
-              {step.date ? step.date.toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "—"}
-            </p>
+    <>
+      {/* Vertical layout on narrow screens, where 4 side-by-side labels get cramped */}
+      <div className="flex flex-col gap-4 sm:hidden">
+        {steps.map((step, index) => (
+          <div key={step.label} className="flex items-start gap-3">
+            <div className="flex flex-col items-center">
+              {step.reached ? (
+                <CheckCircle2 className="h-6 w-6 shrink-0 text-brand-success" />
+              ) : (
+                <Circle className="h-6 w-6 shrink-0 text-brand-cream-dark" />
+              )}
+              {index < steps.length - 1 && (
+                <div
+                  className={`mt-1 h-6 w-0.5 ${steps[index + 1].reached ? "bg-brand-success" : "bg-brand-cream-dark"}`}
+                />
+              )}
+            </div>
+            <div>
+              <p className={`text-sm font-medium ${step.reached ? "text-brand-ink" : "text-brand-ink-soft/60"}`}>
+                {step.label}
+              </p>
+              <p className="text-xs text-brand-ink-soft/60">
+                {step.date ? step.date.toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "—"}
+              </p>
+            </div>
           </div>
-          {index < steps.length - 1 && (
-            <div
-              className={`mx-1 mt-[-20px] h-0.5 flex-1 ${
-                steps[index + 1].reached ? "bg-brand-success" : "bg-brand-cream-dark"
-              }`}
-            />
-          )}
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+
+      {/* Horizontal layout from sm and up */}
+      <div className="hidden items-start sm:flex">
+        {steps.map((step, index) => (
+          <div key={step.label} className="flex flex-1 items-center last:flex-none">
+            <div className="flex flex-col items-center text-center">
+              {step.reached ? (
+                <CheckCircle2 className="h-6 w-6 text-brand-success" />
+              ) : (
+                <Circle className="h-6 w-6 text-brand-cream-dark" />
+              )}
+              <p className={`mt-2 text-xs font-medium ${step.reached ? "text-brand-ink" : "text-brand-ink-soft/60"}`}>
+                {step.label}
+              </p>
+              <p className="mt-0.5 text-[11px] text-brand-ink-soft/60">
+                {step.date ? step.date.toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "—"}
+              </p>
+            </div>
+            {index < steps.length - 1 && (
+              <div
+                className={`mx-1 mt-[-20px] h-0.5 flex-1 ${
+                  steps[index + 1].reached ? "bg-brand-success" : "bg-brand-cream-dark"
+                }`}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    </>
   );
 }

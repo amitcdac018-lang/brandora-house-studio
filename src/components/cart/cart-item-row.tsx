@@ -61,21 +61,36 @@ export function CartItemRow({ item }: { item: CartItemData }) {
   }
 
   return (
-    <div className="flex gap-4 border-b border-brand-cream-dark py-4">
-      <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md bg-brand-cream-dark">
-        {image && (
-          <Image src={image.url} alt={image.altText ?? item.product.name} fill sizes="96px" className="object-cover" />
-        )}
+    <div className="flex flex-col gap-4 border-b border-brand-cream-dark py-4 sm:flex-row">
+      <div className="flex gap-4">
+        <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md bg-brand-cream-dark">
+          {image && (
+            <Image src={image.url} alt={image.altText ?? item.product.name} fill sizes="96px" className="object-cover" />
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1 sm:hidden">
+          <Link href={`/product/${item.product.slug}`} className="font-medium text-brand-ink hover:text-brand-gold">
+            {item.product.name}
+          </Link>
+          <p className="mt-1 text-sm text-brand-ink-soft">
+            Size {item.variant.size} · {item.variant.color}
+          </p>
+          <p className="mt-1 font-display text-brand-ink">{formatPrice(unitPrice)}</p>
+        </div>
       </div>
 
-      <div className="flex-1">
-        <Link href={`/product/${item.product.slug}`} className="font-medium text-brand-ink hover:text-brand-gold">
+      <div className="min-w-0 flex-1">
+        <Link
+          href={`/product/${item.product.slug}`}
+          className="hidden font-medium text-brand-ink hover:text-brand-gold sm:inline"
+        >
           {item.product.name}
         </Link>
-        <p className="mt-1 text-sm text-brand-ink-soft">
+        <p className="mt-1 hidden text-sm text-brand-ink-soft sm:block">
           Size {item.variant.size} · {item.variant.color}
         </p>
-        <p className="mt-1 font-display text-brand-ink">{formatPrice(unitPrice)}</p>
+        <p className="mt-1 hidden font-display text-brand-ink sm:block">{formatPrice(unitPrice)}</p>
 
         <div className="mt-2 flex items-center gap-3">
           <select
@@ -111,7 +126,7 @@ export function CartItemRow({ item }: { item: CartItemData }) {
         )}
       </div>
 
-      <div className="font-display text-brand-ink">{formatPrice(unitPrice * item.quantity)}</div>
+      <div className="font-display text-brand-ink sm:text-right">{formatPrice(unitPrice * item.quantity)}</div>
     </div>
   );
 }
