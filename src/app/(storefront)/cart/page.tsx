@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { getCartWithItems } from "@/lib/data/cart";
 import { CartItemRow } from "@/components/cart/cart-item-row";
 import { formatPrice, discountedPrice } from "@/lib/format";
+import { calculateShipping } from "@/lib/shipping/calculate";
 
 export const metadata: Metadata = { title: "Your Cart" };
 
@@ -34,6 +35,9 @@ export default async function CartPage() {
       : discountedPrice(Number(item.product.basePrice), item.product.discountPct);
     return sum + unitPrice * item.quantity;
   }, 0);
+
+  const { charge: shippingCharge } = items.length > 0 ? await calculateShipping(subtotal) : { charge: 0 };
+  const estimatedTotal = subtotal + shippingCharge;
 
   if (items.length === 0) {
     return (
@@ -82,11 +86,25 @@ export default async function CartPage() {
 
         <div className="h-fit rounded-xl border border-brand-cream-dark bg-white p-6">
           <h2 className="font-display text-lg text-brand-ink">Order Summary</h2>
-          <div className="mt-4 flex justify-between text-sm text-brand-ink-soft">
-            <span>Subtotal</span>
-            <span>{formatPrice(subtotal)}</span>
+          <div className="mt-4 space-y-2 text-sm">
+            <div className="flex justify-between text-brand-ink-soft">
+              <span>Subtotal</span>
+              <span>{formatPrice(subtotal)}</span>
+            </div>
+            <div className="flex justify-between text-brand-ink-soft">
+              <span>Shipping</span>
+              <span className={shippingCharge === 0 ? "font-medium text-brand-success" : undefined}>
+                {shippingCharge === 0 ? "FREE" : formatPrice(shippingCharge)}
+              </span>
+            </div>
+            <div className="flex justify-between border-t border-brand-cream-dark pt-2 font-display text-base text-brand-ink">
+              <span>Estimated Total</span>
+              <span>{formatPrice(estimatedTotal)}</span>
+            </div>
           </div>
-          <p className="mt-1 text-xs text-brand-ink-soft/70">Shipping and taxes calculated at checkout.</p>
+          <p className="mt-2 text-xs text-brand-ink-soft/70">
+            Final total is confirmed on the next screen before you pay.
+          </p>
           <Link
             href="/checkout"
             className="mt-6 block rounded-md bg-brand-ink py-3 text-center text-sm font-semibold text-brand-gold-soft hover:bg-brand-ink-soft"

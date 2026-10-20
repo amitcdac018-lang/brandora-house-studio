@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { CheckCircle2, MapPin, Truck } from "lucide-react";
+import { CheckCircle2, MapPin, Truck, AlertCircle } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatPrice } from "@/lib/format";
@@ -19,6 +19,17 @@ const statusLabels: Record<string, string> = {
   CANCELLED: "Cancelled",
   REFUNDED: "Refunded",
   PAYMENT_FAILED: "Payment Failed",
+};
+
+const statusDescriptions: Record<string, string> = {
+  PENDING_PAYMENT: "We're waiting for your payment to complete.",
+  PAID: "Payment received — we're getting your order ready.",
+  PROCESSING: "Your order is being packed for shipment.",
+  SHIPPED: "On its way to you.",
+  DELIVERED: "This order has been delivered.",
+  CANCELLED: "This order was cancelled.",
+  REFUNDED: "This order was refunded.",
+  PAYMENT_FAILED: "Payment did not go through — no charge was made.",
 };
 
 const statusBadgeClasses: Record<string, string> = {
@@ -74,6 +85,21 @@ export default async function OrderDetailPage({
           Payment successful! Your order is confirmed.
         </div>
       )}
+      {order.status === "PAYMENT_FAILED" && (
+        <div className="mb-6 flex items-start gap-3 rounded-md bg-brand-danger/10 p-4 text-sm text-brand-danger">
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+          <div>
+            <p className="font-medium">This order was not completed — payment did not go through.</p>
+            <p className="mt-1">
+              No charge was made and the items were released back into stock. You can add them to your cart again
+              and check out whenever you&apos;re ready.
+            </p>
+            <Link href="/shop" className="mt-2 inline-block font-semibold underline hover:no-underline">
+              Browse the shop to re-order
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
@@ -88,6 +114,9 @@ export default async function OrderDetailPage({
           {statusLabels[order.status] ?? order.status}
         </span>
       </div>
+      {statusDescriptions[order.status] && (
+        <p className="mt-1 text-right text-xs text-brand-ink-soft">{statusDescriptions[order.status]}</p>
+      )}
 
       {/* Visual progress timeline — Amazon/Flipkart-style tracker */}
       <div className="mt-6 rounded-xl border border-brand-cream-dark bg-white p-6">
