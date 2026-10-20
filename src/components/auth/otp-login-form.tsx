@@ -96,6 +96,12 @@ export function OtpLoginForm() {
         >
           {isPending ? "Sending..." : "Send OTP"}
         </button>
+
+        {error && (
+          <p className="text-center text-xs text-brand-ink-soft">
+            Having trouble? Use email &amp; password sign-in instead.
+          </p>
+        )}
       </div>
     );
   }

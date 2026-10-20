@@ -50,12 +50,36 @@ export function toE164(rawPhone: string): string | null {
   return null;
 }
 
+/** Thrown by sendOtp for failures that are not fixed by the customer simply retrying. */
+export class OtpSendConfigError extends Error {}
+
+function getTwilioErrorCode(error: unknown): number | null {
+  if (error && typeof error === "object" && "code" in error && typeof (error as { code: unknown }).code === "number") {
+    return (error as { code: number }).code;
+  }
+  return null;
+}
+
 export async function sendOtp(e164Phone: string): Promise<void> {
   const verifyServiceSid = getEnv("TWILIO_VERIFY_SERVICE_SID");
-  await getTwilioClient().verify.v2.services(verifyServiceSid).verifications.create({
-    to: e164Phone,
-    channel: "sms",
-  });
+  try {
+    await getTwilioClient().verify.v2.services(verifyServiceSid).verifications.create({
+      to: e164Phone,
+      channel: "sms",
+    });
+  } catch (error) {
+    const code = getTwilioErrorCode(error);
+    // 21608: trial account can only send to a verified number. Retrying the same
+    // number will never succeed, so this must not be reported as a transient error.
+    if (code === 21608) {
+      throw new OtpSendConfigError("This number can't receive a code right now. Please try a different sign-in method.");
+    }
+    // 21211/21614: not a real/reachable mobile number — also not fixed by retrying as-is.
+    if (code === 21211 || code === 21614) {
+      throw new OtpSendConfigError("We couldn't deliver a code to this number. Double-check it and try again.");
+    }
+    throw error;
+  }
 }
 
 export type OtpCheckResult = "approved" | "denied" | "expired";

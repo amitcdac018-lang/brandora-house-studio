@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendOtpSchema } from "@/lib/validations/auth";
-import { sendOtp, toE164 } from "@/lib/otp/twilio-verify";
+import { sendOtp, toE164, OtpSendConfigError } from "@/lib/otp/twilio-verify";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
@@ -32,7 +32,10 @@ export async function POST(request: Request) {
   try {
     await sendOtp(e164Phone);
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (error) {
+    if (error instanceof OtpSendConfigError) {
+      return NextResponse.json({ error: error.message }, { status: 422 });
+    }
     return NextResponse.json({ error: "Could not send the code. Please try again." }, { status: 502 });
   }
 }
