@@ -5,16 +5,26 @@ import { formatPrice } from "@/lib/format";
 export const metadata: Metadata = { title: "Sales Reports" };
 
 export default async function AdminReportsPage() {
+  const paidStatuses: ("PAID" | "PROCESSING" | "SHIPPED" | "DELIVERED")[] = [
+    "PAID",
+    "PROCESSING",
+    "SHIPPED",
+    "DELIVERED",
+  ];
+
   const [byStatus, byBrand, totalRevenue] = await Promise.all([
     prisma.order.groupBy({ by: ["status"], _count: { _all: true }, _sum: { grandTotal: true } }),
+    // Only count items from orders that were actually paid for — a PENDING_PAYMENT or
+    // PAYMENT_FAILED order never resulted in a real sale and must not inflate "units sold".
     prisma.orderItem.groupBy({
       by: ["productId"],
+      where: { order: { status: { in: paidStatuses } } },
       _sum: { quantity: true },
       orderBy: { _sum: { quantity: "desc" } },
       take: 10,
     }),
     prisma.order.aggregate({
-      where: { status: { in: ["PAID", "PROCESSING", "SHIPPED", "DELIVERED"] } },
+      where: { status: { in: paidStatuses } },
       _sum: { grandTotal: true },
     }),
   ]);
