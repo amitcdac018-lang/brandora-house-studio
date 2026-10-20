@@ -25,6 +25,27 @@ export function toShiprocketPhone(rawPhone: string): string | null {
   return /^[6-9]\d{9}$/.test(withoutCountryCode) ? withoutCountryCode : null;
 }
 
+/**
+ * When Shiprocket rejects an unrecognized pickup_location, it helpfully echoes the account's
+ * actual registered pickup locations under data.data[].pickup_location. Pull those out so the
+ * error message tells you exactly what SHIPROCKET_PICKUP_LOCATION should be instead of just
+ * saying it's wrong.
+ */
+function extractPickupLocationLabels(raw: Record<string, unknown>): string[] {
+  const data = raw.data;
+  if (!data || typeof data !== "object") return [];
+  const innerData = (data as Record<string, unknown>).data;
+  if (!Array.isArray(innerData)) return [];
+
+  return innerData
+    .map((entry) =>
+      entry && typeof entry === "object" && typeof (entry as Record<string, unknown>).pickup_location === "string"
+        ? ((entry as Record<string, unknown>).pickup_location as string)
+        : null
+    )
+    .filter((label): label is string => label !== null);
+}
+
 type ShiprocketTokenCache = { token: string; expiresAt: number } | null;
 let tokenCache: ShiprocketTokenCache = null;
 
@@ -168,10 +189,17 @@ export async function createShiprocketOrder(
     }),
   });
 
-  // TEMPORARY diagnostic — Shiprocket's response shape for order_id/shipment_id has been
-  // inconsistent across accounts/API versions in practice. Log the raw shape once so we can
-  // confirm the real field names/paths instead of guessing, then remove this.
-  console.log("Shiprocket create order raw response:", JSON.stringify(raw));
+  // Shiprocket returns some validation failures (e.g. an unrecognized pickup_location) as an
+  // HTTP 200 with an error-shaped body rather than a non-2xx status, so a plain response.ok
+  // check doesn't catch them. Detect that shape explicitly and surface the valid pickup
+  // location labels it helpfully lists, since a mismatched label is the most common cause.
+  if (typeof raw.message === "string" && raw.order_id === undefined) {
+    const pickupOptions = extractPickupLocationLabels(raw);
+    const hint = pickupOptions.length
+      ? ` Valid pickup location labels on this account: ${pickupOptions.join(", ")}.`
+      : "";
+    throw new Error(`${raw.message}${hint}`);
+  }
 
   const orderId = raw.order_id;
   const shipmentId = raw.shipment_id;
