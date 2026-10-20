@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
@@ -27,20 +27,25 @@ type CartItemData = {
 
 export function CartItemRow({ item }: { item: CartItemData }) {
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const image = item.product.images[0];
   const unitPrice = item.variant.priceOverride
     ? Number(item.variant.priceOverride)
     : discountedPrice(Number(item.product.basePrice), item.product.discountPct);
 
   function handleQuantityChange(quantity: number) {
+    setError(null);
     startTransition(async () => {
-      await updateCartItemAction({ cartItemId: item.id, quantity });
+      const result = await updateCartItemAction({ cartItemId: item.id, quantity });
+      if (result?.error) setError(result.error);
     });
   }
 
   function handleRemove() {
+    setError(null);
     startTransition(async () => {
-      await removeCartItemAction({ cartItemId: item.id });
+      const result = await removeCartItemAction({ cartItemId: item.id });
+      if (result?.error) setError(result.error);
     });
   }
 
@@ -87,6 +92,12 @@ export function CartItemRow({ item }: { item: CartItemData }) {
             Remove
           </button>
         </div>
+
+        {error && (
+          <p role="alert" className="mt-2 text-sm text-brand-danger">
+            {error}
+          </p>
+        )}
       </div>
 
       <div className="font-display text-brand-ink">{formatPrice(unitPrice * item.quantity)}</div>

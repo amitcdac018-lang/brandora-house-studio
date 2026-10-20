@@ -69,9 +69,12 @@ export function CheckoutClient({
         {showAddForm && (
           <div className="mt-4 rounded-lg border border-brand-cream-dark p-4">
             <AddressForm
-              onCreated={(addressId) => {
-                setSelectedAddressId(addressId);
-                setShowAddForm(false);
+              onCreated={() => {
+                // Reload so the newly saved address actually appears in the list above —
+                // this component only has the server-rendered snapshot of addresses from
+                // page load, so setting selectedAddressId alone would leave the radio list
+                // unchanged while still pointing checkout at an address the customer can't see.
+                window.location.reload();
               }}
             />
           </div>

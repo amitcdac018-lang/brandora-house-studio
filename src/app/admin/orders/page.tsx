@@ -5,6 +5,17 @@ import { formatPrice } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Manage Orders" };
 
+const statusBadgeClasses: Record<string, string> = {
+  PENDING_PAYMENT: "bg-brand-gold-soft text-brand-ink",
+  PAID: "bg-brand-success/10 text-brand-success",
+  PROCESSING: "bg-brand-gold-soft text-brand-ink",
+  SHIPPED: "bg-brand-gold-soft text-brand-ink",
+  DELIVERED: "bg-brand-success/10 text-brand-success",
+  CANCELLED: "bg-brand-danger/10 text-brand-danger",
+  REFUNDED: "bg-brand-danger/10 text-brand-danger",
+  PAYMENT_FAILED: "bg-brand-danger/10 text-brand-danger",
+};
+
 export default async function AdminOrdersPage() {
   const orders = await prisma.order.findMany({
     orderBy: { createdAt: "desc" },
@@ -35,7 +46,11 @@ export default async function AdminOrdersPage() {
                 <td className="p-3 text-brand-ink-soft">{order.user.email}</td>
                 <td className="p-3 text-brand-ink-soft">{formatPrice(Number(order.grandTotal))}</td>
                 <td className="p-3">
-                  <span className="rounded-full bg-brand-gold-soft px-2 py-0.5 text-xs text-brand-ink">
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs ${
+                      statusBadgeClasses[order.status] ?? "bg-brand-gold-soft text-brand-ink"
+                    }`}
+                  >
                     {order.status}
                   </span>
                 </td>
