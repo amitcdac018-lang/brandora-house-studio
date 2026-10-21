@@ -78,7 +78,14 @@ export function LoginForm() {
         <Link href="/forgot-password" className="text-brand-ink-soft hover:text-brand-gold">
           Forgot password?
         </Link>
-        <Link href="/register" className="text-brand-ink-soft hover:text-brand-gold">
+        <Link
+          href={
+            searchParams.get("callbackUrl")
+              ? `/register?callbackUrl=${encodeURIComponent(searchParams.get("callbackUrl")!)}`
+              : "/register"
+          }
+          className="text-brand-ink-soft hover:text-brand-gold"
+        >
           Create an account
         </Link>
       </div>

@@ -43,7 +43,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
     startTransition(async () => {
       const result = await addToCartAction({ productId: product.id, variantId: defaultVariant.id, quantity: 1 });
       if (result?.error) {
-        if (result.error.includes("sign")) {
+        if (result.code === "NOT_AUTHENTICATED") {
           router.push(`/login?callbackUrl=/product/${product.slug}`);
           return;
         }

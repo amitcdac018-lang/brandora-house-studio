@@ -52,8 +52,8 @@ export function AddToCartForm({
     startTransition(async () => {
       const result = await addToCartAction({ productId, variantId: selectedVariant.id, quantity: 1 });
       if (result?.error) {
-        if (result.error.includes("sign")) {
-          router.push("/login");
+        if (result.code === "NOT_AUTHENTICATED") {
+          router.push(`/login?callbackUrl=/product/${productSlug}`);
           return;
         }
         setMessage({ type: "error", text: result.error });
@@ -73,8 +73,8 @@ export function AddToCartForm({
     startTransition(async () => {
       const result = await addToCartAction({ productId, variantId: selectedVariant.id, quantity: 1 });
       if (result?.error) {
-        if (result.error.includes("sign")) {
-          router.push("/login?callbackUrl=/product/" + productSlug);
+        if (result.code === "NOT_AUTHENTICATED") {
+          router.push(`/login?callbackUrl=/product/${productSlug}`);
           return;
         }
         setMessage({ type: "error", text: result.error });

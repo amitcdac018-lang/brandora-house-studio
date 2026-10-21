@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { registerSchema } from "@/lib/validations/auth";
 
 export function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +39,10 @@ export function RegisterForm() {
         return;
       }
 
-      router.push("/login?registered=1");
+      const loginUrl = callbackUrl
+        ? `/login?registered=1&callbackUrl=${encodeURIComponent(callbackUrl)}`
+        : "/login?registered=1";
+      router.push(loginUrl);
     });
   }
 
@@ -104,7 +109,10 @@ export function RegisterForm() {
 
       <p className="text-center text-sm text-brand-ink-soft">
         Already have an account?{" "}
-        <Link href="/login" className="text-brand-gold hover:underline">
+        <Link
+          href={callbackUrl ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}` : "/login"}
+          className="text-brand-gold hover:underline"
+        >
           Sign in
         </Link>
       </p>

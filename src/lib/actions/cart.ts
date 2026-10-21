@@ -2,12 +2,21 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth/guards";
+import { requireUser, UnauthorizedError } from "@/lib/auth/guards";
 import { getOrCreateCart } from "@/lib/data/cart";
 import { addToCartSchema, updateCartItemSchema, removeCartItemSchema } from "@/lib/validations/cart";
 
 export async function addToCartAction(input: unknown) {
-  const user = await requireUser();
+  let user;
+  try {
+    user = await requireUser();
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      return { error: "Please sign in to add items to your cart.", code: "NOT_AUTHENTICATED" as const };
+    }
+    throw error;
+  }
+
   const { productId, variantId, quantity } = addToCartSchema.parse(input);
 
   const variant = await prisma.productVariant.findUnique({
