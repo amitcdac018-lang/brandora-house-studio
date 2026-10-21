@@ -52,6 +52,17 @@ function withSecurityHeaders(request: NextRequest, build: (requestHeaders: Heade
   return response;
 }
 
+/**
+ * Protected pages must never be served from the browser's back/forward cache (bfcache) —
+ * otherwise pressing Back after signing out (or after a session expires) can briefly show
+ * a stale snapshot of an authenticated page instead of re-running this auth check. Forcing
+ * no-store means Back/Forward always re-requests the page and gets a fresh redirect decision.
+ */
+function withNoStore(response: NextResponse): NextResponse {
+  response.headers.set("Cache-Control", "no-store, must-revalidate");
+  return response;
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -66,15 +77,15 @@ export async function proxy(request: NextRequest) {
   if (!session?.user) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
-    return withSecurityHeaders(request, () => NextResponse.redirect(loginUrl));
+    return withSecurityHeaders(request, () => withNoStore(NextResponse.redirect(loginUrl)));
   }
 
   if (pathname.startsWith(ADMIN_PREFIX) && session.user.role !== "ADMIN") {
-    return withSecurityHeaders(request, () => NextResponse.redirect(new URL("/", request.url)));
+    return withSecurityHeaders(request, () => withNoStore(NextResponse.redirect(new URL("/", request.url))));
   }
 
   return withSecurityHeaders(request, (requestHeaders) =>
-    NextResponse.next({ request: { headers: requestHeaders } })
+    withNoStore(NextResponse.next({ request: { headers: requestHeaders } }))
   );
 }
 

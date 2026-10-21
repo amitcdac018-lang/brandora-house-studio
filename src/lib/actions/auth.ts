@@ -1,6 +1,6 @@
 "use server";
 
-import { signIn } from "@/lib/auth";
+import { signIn, signOut } from "@/lib/auth";
 import { loginSchema } from "@/lib/validations/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import { headers } from "next/headers";
@@ -44,4 +44,10 @@ export async function signInWithOtpAction(input: { phone: string; ticket: string
   } catch {
     return { error: "Could not sign you in. Please request a new code and try again." };
   }
+}
+
+export async function signOutAction() {
+  // redirect: false — the client navigates to /login itself after this resolves, so the
+  // session cookie is cleared first and the browser isn't mid-redirect when it does.
+  await signOut({ redirect: false });
 }

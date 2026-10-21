@@ -43,7 +43,7 @@ export default async function AccountPage() {
       <form
         action={async () => {
           "use server";
-          await signOut({ redirectTo: "/" });
+          await signOut({ redirectTo: "/login" });
         }}
         className="mt-8"
       >

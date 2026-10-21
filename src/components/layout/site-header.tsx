@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
-import { Menu, ShoppingBag, User, X } from "lucide-react";
+import { Menu, ShoppingBag, X } from "lucide-react";
 import { BrandLogo } from "./brand-logo";
 import { InstagramIcon } from "@/components/icons/instagram-icon";
 import { siteConfig } from "@/lib/site-config";
 import { useCartUi } from "@/components/cart/cart-ui-context";
 import { useEscapeToClose } from "@/lib/hooks/use-escape-to-close";
+import { AccountMenu } from "./account-menu";
 
 const navLinks = [
   { href: "/shop", label: "Shop" },
@@ -139,13 +140,7 @@ export function SiteHeader() {
           >
             <InstagramIcon />
           </a>
-          <Link
-            href="/account"
-            aria-label="My account"
-            className="text-brand-ink-soft transition-colors hover:text-brand-gold"
-          >
-            <User className="h-5 w-5" />
-          </Link>
+          <AccountMenu />
           <CartLink />
         </div>
       </div>
