@@ -1,10 +1,20 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { auth } from "@/lib/auth";
+import { toSafeRedirectPath } from "@/lib/auth/safe-redirect";
 import { LoginTabs } from "@/components/auth/login-tabs";
 
 export const metadata: Metadata = { title: "Sign In" };
 
-export default function LoginPage() {
+export default async function LoginPage({ searchParams }: PageProps<"/login">) {
+  const session = await auth();
+  if (session?.user) {
+    const resolvedSearchParams = await searchParams;
+    const rawCallbackUrl = typeof resolvedSearchParams.callbackUrl === "string" ? resolvedSearchParams.callbackUrl : null;
+    redirect(toSafeRedirectPath(rawCallbackUrl));
+  }
+
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12 sm:px-6">
       <h1 className="font-display text-3xl text-brand-ink">Welcome Back</h1>

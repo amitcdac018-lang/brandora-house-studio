@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { addToCartAction } from "@/lib/actions/cart";
+import { toSafeRedirectPath } from "@/lib/auth/safe-redirect";
 import { useCartUi } from "@/components/cart/cart-ui-context";
 
 /**
@@ -20,31 +21,35 @@ export function usePostLoginRedirect() {
   const { incrementItemCount, notify } = useCartUi();
 
   async function resumeAfterLogin() {
-    const callbackUrl = searchParams.get("callbackUrl") ?? "/account";
+    const callbackUrl = toSafeRedirectPath(searchParams.get("callbackUrl"));
     const productId = searchParams.get("addProductId");
     const variantId = searchParams.get("addVariantId");
     const intent = searchParams.get("intent");
 
+    // Use replace() (not push()) for every post-login navigation — the login page
+    // should never reappear if the customer presses the browser Back button after
+    // successfully signing in. push() would leave /login sitting in the history
+    // stack right underneath the destination.
     if (productId && variantId) {
       const result = await addToCartAction({ productId, variantId, quantity: 1 });
       if (result?.error) {
         // Could not add the item for a non-auth reason (e.g. now out of stock) —
         // still return the customer to where they were instead of stranding them.
         notify(result.error, "error");
-        router.push(callbackUrl);
+        router.replace(callbackUrl);
         router.refresh();
         return;
       }
 
       incrementItemCount(1);
       if (intent === "buyNow") {
-        router.push("/checkout");
+        router.replace("/checkout");
         return;
       }
       notify("Added to your bag", "success", { href: "/cart", label: "View Cart →" });
     }
 
-    router.push(callbackUrl);
+    router.replace(callbackUrl);
     router.refresh();
   }
 
