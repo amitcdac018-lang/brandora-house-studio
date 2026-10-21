@@ -13,7 +13,10 @@ import { useCartUi } from "@/components/cart/cart-ui-context";
  * see buildLoginRedirectUrl(). On success we replay that add-to-cart here (the cart
  * requires a logged-in user, so it couldn't happen before login) and then send the
  * customer to checkout (Buy Now) or back to where they were (Add to Cart), instead
- * of dropping them on a generic /account page and making them repeat the click.
+ * of making them repeat the click. With no callbackUrl at all (e.g. they navigated
+ * to /login directly), toSafeRedirectPath falls back to /shop rather than /account,
+ * so a plain sign-in drops the customer into the catalog instead of an empty-feeling
+ * account dashboard.
  */
 export function usePostLoginRedirect() {
   const router = useRouter();

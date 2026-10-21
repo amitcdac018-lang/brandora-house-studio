@@ -8,9 +8,9 @@ describe("toSafeRedirectPath", () => {
   });
 
   it("falls back to the default when given null, undefined, or empty", () => {
-    expect(toSafeRedirectPath(null)).toBe("/account");
-    expect(toSafeRedirectPath(undefined)).toBe("/account");
-    expect(toSafeRedirectPath("")).toBe("/account");
+    expect(toSafeRedirectPath(null)).toBe("/shop");
+    expect(toSafeRedirectPath(undefined)).toBe("/shop");
+    expect(toSafeRedirectPath("")).toBe("/shop");
   });
 
   it("honors a custom fallback", () => {
@@ -18,16 +18,16 @@ describe("toSafeRedirectPath", () => {
   });
 
   it("rejects an absolute external URL (open-redirect attempt)", () => {
-    expect(toSafeRedirectPath("https://evil.com")).toBe("/account");
-    expect(toSafeRedirectPath("http://evil.com/phish")).toBe("/account");
+    expect(toSafeRedirectPath("https://evil.com")).toBe("/shop");
+    expect(toSafeRedirectPath("http://evil.com/phish")).toBe("/shop");
   });
 
   it("rejects a protocol-relative URL (open-redirect attempt)", () => {
-    expect(toSafeRedirectPath("//evil.com")).toBe("/account");
+    expect(toSafeRedirectPath("//evil.com")).toBe("/shop");
   });
 
   it("rejects a path that doesn't start with a slash", () => {
-    expect(toSafeRedirectPath("evil.com")).toBe("/account");
-    expect(toSafeRedirectPath("javascript:alert(1)")).toBe("/account");
+    expect(toSafeRedirectPath("evil.com")).toBe("/shop");
+    expect(toSafeRedirectPath("javascript:alert(1)")).toBe("/shop");
   });
 });
