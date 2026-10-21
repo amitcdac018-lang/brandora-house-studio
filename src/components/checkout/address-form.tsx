@@ -19,6 +19,7 @@ export function AddressForm({ onCreated }: { onCreated: (addressId: string) => v
   const [isPending, startTransition] = useTransition();
   const [isLocating, setIsLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [locationNotice, setLocationNotice] = useState<string | null>(null);
   const [fields, setFields] = useState<AddressFields>(emptyAddressFields);
 
@@ -26,52 +27,69 @@ export function AddressForm({ onCreated }: { onCreated: (addressId: string) => v
     setFields((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleUseCurrentLocation() {
-    setError(null);
+  function getCurrentPosition(options: PositionOptions): Promise<GeolocationPosition> {
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, options);
+    });
+  }
+
+  async function resolveAddressFromPosition(position: GeolocationPosition) {
+    const { latitude, longitude } = position.coords;
+    const response = await fetch(`/api/geocode?lat=${latitude}&lon=${longitude}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data?.error ?? "Could not detect your address. Please enter it manually.");
+    }
+
+    setFields((prev) => ({
+      ...prev,
+      line1: data.line1 || prev.line1,
+      city: data.city || prev.city,
+      state: data.state || prev.state,
+      postalCode: data.postalCode || prev.postalCode,
+    }));
+    setLocationNotice("Address detected — please double-check it before saving.");
+  }
+
+  async function handleUseCurrentLocation() {
+    setLocationError(null);
     setLocationNotice(null);
 
     if (!("geolocation" in navigator)) {
-      setError("Your browser doesn't support location detection. Please enter your address manually.");
+      setLocationError("Your browser doesn't support location detection. Please enter your address manually.");
       return;
     }
 
     setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-          const response = await fetch(`/api/geocode?lat=${latitude}&lon=${longitude}`);
-          const data = await response.json();
+    try {
+      // GPS frequently fails or times out on the first fix (cold start, indoors, weak
+      // signal) but succeeds moments later — so automatically retry once with relaxed
+      // accuracy and a longer timeout before surfacing an error to the user.
+      let position: GeolocationPosition;
+      try {
+        position = await getCurrentPosition({ enableHighAccuracy: true, timeout: 10_000 });
+      } catch (firstError) {
+        const geoError = firstError as GeolocationPositionError;
+        if (geoError.code === geoError.PERMISSION_DENIED) throw geoError;
+        position = await getCurrentPosition({ enableHighAccuracy: false, timeout: 20_000, maximumAge: 60_000 });
+      }
 
-          if (!response.ok) {
-            setError(data?.error ?? "Could not detect your address. Please enter it manually.");
-            return;
-          }
-
-          setFields((prev) => ({
-            ...prev,
-            line1: data.line1 || prev.line1,
-            city: data.city || prev.city,
-            state: data.state || prev.state,
-            postalCode: data.postalCode || prev.postalCode,
-          }));
-          setLocationNotice("Address detected — please double-check it before saving.");
-        } catch {
-          setError("Could not detect your address. Please enter it manually.");
-        } finally {
-          setIsLocating(false);
-        }
-      },
-      (geoError) => {
-        setIsLocating(false);
+      await resolveAddressFromPosition(position);
+    } catch (err) {
+      const geoError = err as GeolocationPositionError;
+      if (typeof geoError.code === "number") {
         if (geoError.code === geoError.PERMISSION_DENIED) {
-          setError("Location permission denied. Please enter your address manually.");
+          setLocationError("Location permission denied. Please enable it in your browser settings, or enter your address manually.");
         } else {
-          setError("Could not get your location. Please enter your address manually.");
+          setLocationError("Couldn't get a GPS fix just now — this can happen indoors or with a weak signal. Please try again.");
         }
-      },
-      { enableHighAccuracy: true, timeout: 10_000 }
-    );
+      } else {
+        setLocationError((err as Error).message || "Could not detect your address. Please enter it manually.");
+      }
+    } finally {
+      setIsLocating(false);
+    }
   }
 
   function handleSubmit(formData: FormData) {
@@ -113,9 +131,14 @@ export function AddressForm({ onCreated }: { onCreated: (addressId: string) => v
         className="flex items-center gap-2 rounded-md border border-brand-gold px-3 py-2 text-sm font-medium text-brand-gold hover:bg-brand-gold-soft disabled:opacity-50"
       >
         {isLocating ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
-        {isLocating ? "Detecting your location..." : "Use Current Location"}
+        {isLocating ? "Detecting your location..." : locationError ? "Try Again" : "Use Current Location"}
       </button>
 
+      {locationError && (
+        <p role="alert" className="text-xs text-brand-danger">
+          {locationError}
+        </p>
+      )}
       {locationNotice && <p className="text-xs text-brand-success">{locationNotice}</p>}
 
       <div className="grid grid-cols-2 gap-3">
