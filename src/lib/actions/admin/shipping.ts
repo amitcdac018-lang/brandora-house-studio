@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth/guards";
+import { SHIPPING_RULES_CACHE_TAG } from "@/lib/shipping/calculate";
 import { z } from "zod";
 
 const shippingRuleSchema = z.object({
@@ -20,6 +21,7 @@ export async function createShippingRuleAction(input: unknown) {
 
   await prisma.shippingRule.create({ data: parsed.data });
   revalidatePath("/admin/shipping");
+  updateTag(SHIPPING_RULES_CACHE_TAG);
   return { ok: true };
 }
 
@@ -27,6 +29,7 @@ export async function toggleShippingRuleAction(id: string, isActive: boolean) {
   await requireAdmin();
   await prisma.shippingRule.update({ where: { id }, data: { isActive } });
   revalidatePath("/admin/shipping");
+  updateTag(SHIPPING_RULES_CACHE_TAG);
   return { ok: true };
 }
 
@@ -34,5 +37,6 @@ export async function deleteShippingRuleAction(id: string) {
   await requireAdmin();
   await prisma.shippingRule.delete({ where: { id } });
   revalidatePath("/admin/shipping");
+  updateTag(SHIPPING_RULES_CACHE_TAG);
   return { ok: true };
 }

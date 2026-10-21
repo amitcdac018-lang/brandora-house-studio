@@ -1,14 +1,26 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
+import { Pagination } from "@/components/shop/pagination";
 
 export const metadata: Metadata = { title: "Customers" };
 
-export default async function AdminCustomersPage() {
-  const customers = await prisma.user.findMany({
-    where: { role: "CUSTOMER" },
-    orderBy: { createdAt: "desc" },
-    include: { _count: { select: { orders: true } } },
-  });
+const PAGE_SIZE = 50;
+
+export default async function AdminCustomersPage({ searchParams }: PageProps<"/admin/customers">) {
+  const resolvedSearchParams = await searchParams;
+  const page = Math.max(1, Number(resolvedSearchParams.page) || 1);
+
+  const [customers, total] = await Promise.all([
+    prisma.user.findMany({
+      where: { role: "CUSTOMER" },
+      orderBy: { createdAt: "desc" },
+      include: { _count: { select: { orders: true } } },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.user.count({ where: { role: "CUSTOMER" } }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div>
@@ -37,6 +49,8 @@ export default async function AdminCustomersPage() {
         </table>
         {customers.length === 0 && <p className="p-6 text-center text-brand-ink-soft">No customers yet.</p>}
       </div>
+
+      <Pagination page={page} totalPages={totalPages} searchParams={resolvedSearchParams} />
     </div>
   );
 }

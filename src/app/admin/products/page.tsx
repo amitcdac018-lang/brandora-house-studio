@@ -2,14 +2,26 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { formatPrice } from "@/lib/format";
+import { Pagination } from "@/components/shop/pagination";
 
 export const metadata: Metadata = { title: "Manage Products" };
 
-export default async function AdminProductsPage() {
-  const products = await prisma.product.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { brand: true, variants: true },
-  });
+const PAGE_SIZE = 50;
+
+export default async function AdminProductsPage({ searchParams }: PageProps<"/admin/products">) {
+  const resolvedSearchParams = await searchParams;
+  const page = Math.max(1, Number(resolvedSearchParams.page) || 1);
+
+  const [products, total] = await Promise.all([
+    prisma.product.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { brand: true, variants: { select: { stock: true } } },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.product.count(),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div>
@@ -67,6 +79,8 @@ export default async function AdminProductsPage() {
           <p className="p-6 text-center text-brand-ink-soft">No products yet.</p>
         )}
       </div>
+
+      <Pagination page={page} totalPages={totalPages} searchParams={resolvedSearchParams} />
     </div>
   );
 }

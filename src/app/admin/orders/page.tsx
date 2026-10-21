@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { formatPrice } from "@/lib/format";
+import { Pagination } from "@/components/shop/pagination";
 
 export const metadata: Metadata = { title: "Manage Orders" };
+
+const PAGE_SIZE = 50;
 
 const statusBadgeClasses: Record<string, string> = {
   PENDING_PAYMENT: "bg-brand-gold-soft text-brand-ink",
@@ -16,12 +19,20 @@ const statusBadgeClasses: Record<string, string> = {
   PAYMENT_FAILED: "bg-brand-danger/10 text-brand-danger",
 };
 
-export default async function AdminOrdersPage() {
-  const orders = await prisma.order.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 100,
-    include: { user: true },
-  });
+export default async function AdminOrdersPage({ searchParams }: PageProps<"/admin/orders">) {
+  const resolvedSearchParams = await searchParams;
+  const page = Math.max(1, Number(resolvedSearchParams.page) || 1);
+
+  const [orders, total] = await Promise.all([
+    prisma.order.findMany({
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      include: { user: { select: { email: true } } },
+    }),
+    prisma.order.count(),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div>
@@ -66,6 +77,8 @@ export default async function AdminOrdersPage() {
         </table>
         {orders.length === 0 && <p className="p-6 text-center text-brand-ink-soft">No orders yet.</p>}
       </div>
+
+      <Pagination page={page} totalPages={totalPages} searchParams={resolvedSearchParams} />
     </div>
   );
 }

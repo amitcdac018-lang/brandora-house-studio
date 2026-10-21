@@ -10,6 +10,13 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+// unstable_cache requires a real Next.js request/incremental-cache context that doesn't
+// exist in a plain Vitest unit test — mock it as a passthrough so these tests exercise
+// calculateShipping's own logic rather than Next's caching runtime.
+vi.mock("next/cache", () => ({
+  unstable_cache: <T extends (...args: unknown[]) => unknown>(fn: T) => fn,
+}));
+
 describe("calculateShipping", () => {
   beforeEach(() => {
     findManyMock.mockReset();
