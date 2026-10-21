@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useEscapeToClose } from "@/lib/hooks/use-escape-to-close";
 import {
   LayoutDashboard,
   Package,
@@ -64,6 +65,8 @@ function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: (
 export function AdminSidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useEscapeToClose<HTMLDivElement>(open, () => setOpen(false), triggerRef);
 
   // Close the mobile drawer automatically whenever navigation completes.
   useEffect(() => {
@@ -79,6 +82,7 @@ export function AdminSidebar() {
           <p className="font-display text-base leading-tight text-brand-gold-soft">Brandora Admin</p>
         </div>
         <button
+          ref={triggerRef}
           type="button"
           onClick={() => setOpen((prev) => !prev)}
           aria-expanded={open}
@@ -92,6 +96,7 @@ export function AdminSidebar() {
 
       {open && (
         <div
+          ref={panelRef}
           id="admin-mobile-nav"
           className="border-b border-brand-cream-dark bg-white shadow-md lg:hidden"
         >

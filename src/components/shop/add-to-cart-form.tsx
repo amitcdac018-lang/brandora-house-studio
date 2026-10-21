@@ -106,13 +106,16 @@ export function AddToCartForm({
   return (
     <div className="space-y-5">
       <div>
-        <p className="mb-2 text-sm font-semibold text-brand-ink">Size</p>
-        <div className="flex flex-wrap gap-2">
+        <p className="mb-2 text-sm font-semibold text-brand-ink" id="size-label">
+          Size
+        </p>
+        <div className="flex flex-wrap gap-2" role="group" aria-labelledby="size-label">
           {sizes.map((size) => (
             <button
               key={size}
               type="button"
               onClick={() => handleSizeChange(size)}
+              aria-pressed={selectedSize === size}
               className={`h-10 min-w-10 rounded-md border px-3 text-sm ${
                 selectedSize === size
                   ? "border-brand-ink bg-brand-ink text-brand-gold-soft"
@@ -126,13 +129,16 @@ export function AddToCartForm({
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-semibold text-brand-ink">Color</p>
-        <div className="flex flex-wrap gap-2">
+        <p className="mb-2 text-sm font-semibold text-brand-ink" id="color-label">
+          Color
+        </p>
+        <div className="flex flex-wrap gap-2" role="group" aria-labelledby="color-label">
           {colorsForSize.map((v) => (
             <button
               key={v.color}
               type="button"
               onClick={() => setSelectedColor(v.color)}
+              aria-pressed={selectedColor === v.color}
               className={`rounded-md border px-3 py-2 text-sm ${
                 selectedColor === v.color
                   ? "border-brand-ink bg-brand-ink text-brand-gold-soft"

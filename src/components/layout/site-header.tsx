@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { Menu, ShoppingBag, User, X } from "lucide-react";
 import { BrandLogo } from "./brand-logo";
 import { InstagramIcon } from "@/components/icons/instagram-icon";
 import { siteConfig } from "@/lib/site-config";
 import { useCartUi } from "@/components/cart/cart-ui-context";
+import { useEscapeToClose } from "@/lib/hooks/use-escape-to-close";
 
 const navLinks = [
   { href: "/shop", label: "Shop" },
@@ -51,6 +52,8 @@ function NavLinks({ className, onNavigate }: { className?: string; onNavigate?: 
 function MobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useEscapeToClose<HTMLElement>(open, () => setOpen(false), triggerRef);
 
   // Close the drawer automatically whenever navigation completes.
   useEffect(() => {
@@ -60,6 +63,7 @@ function MobileNav() {
   return (
     <div className="md:hidden">
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
@@ -72,6 +76,7 @@ function MobileNav() {
 
       {open && (
         <nav
+          ref={panelRef}
           id="mobile-nav-menu"
           aria-label="Primary"
           className="absolute inset-x-0 top-16 border-b border-brand-cream-dark bg-brand-cream px-4 py-4 shadow-md"

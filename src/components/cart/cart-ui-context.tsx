@@ -16,6 +16,9 @@ const CartUiContext = createContext<CartUiContextValue | null>(null);
 
 let nextToastId = 1;
 const TOAST_DURATION_MS = 3000;
+// Toasts with an actionable link (e.g. "View Cart ->") get longer on screen so a
+// keyboard user has a realistic chance to Tab to the link before it disappears.
+const TOAST_WITH_ACTION_DURATION_MS = 6000;
 
 export function CartUiProvider({ children }: { children: React.ReactNode }) {
   const [itemCount, setItemCount] = useState(0);
@@ -41,9 +44,12 @@ export function CartUiProvider({ children }: { children: React.ReactNode }) {
   const notify = useCallback((message: string, type: Toast["type"] = "success", action?: Toast["action"]) => {
     const id = nextToastId++;
     setToasts((prev) => [...prev, { id, message, type, action }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, TOAST_DURATION_MS);
+    setTimeout(
+      () => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      },
+      action ? TOAST_WITH_ACTION_DURATION_MS : TOAST_DURATION_MS
+    );
   }, []);
 
   const incrementItemCount = useCallback((by: number) => {
