@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth/guards";
+import { PRODUCT_FILTERS_CACHE_TAG } from "@/lib/data/products";
 import { z } from "zod";
 
 const taxonomySchema = z.object({
@@ -27,6 +28,7 @@ export async function createBrandAction(input: unknown) {
   await prisma.brand.create({ data: parsed.data });
   revalidatePath("/admin/brands");
   revalidatePath("/shop");
+  updateTag(PRODUCT_FILTERS_CACHE_TAG);
   return { ok: true };
 }
 
@@ -35,6 +37,7 @@ export async function toggleBrandActiveAction(brandId: string, isActive: boolean
   await prisma.brand.update({ where: { id: brandId }, data: { isActive } });
   revalidatePath("/admin/brands");
   revalidatePath("/shop");
+  updateTag(PRODUCT_FILTERS_CACHE_TAG);
   return { ok: true };
 }
 
@@ -49,6 +52,7 @@ export async function createCategoryAction(input: unknown) {
   await prisma.category.create({ data: parsed.data });
   revalidatePath("/admin/brands");
   revalidatePath("/shop");
+  updateTag(PRODUCT_FILTERS_CACHE_TAG);
   return { ok: true };
 }
 
@@ -57,5 +61,6 @@ export async function toggleCategoryActiveAction(categoryId: string, isActive: b
   await prisma.category.update({ where: { id: categoryId }, data: { isActive } });
   revalidatePath("/admin/brands");
   revalidatePath("/shop");
+  updateTag(PRODUCT_FILTERS_CACHE_TAG);
   return { ok: true };
 }

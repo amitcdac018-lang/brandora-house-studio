@@ -1,7 +1,10 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
 import { productQuerySchema, type ProductQueryInput } from "@/lib/validations/product";
+
+export const PRODUCT_FILTERS_CACHE_TAG = "product-filters";
 
 const sortToOrderBy: Record<ProductQueryInput["sort"], Prisma.ProductOrderByWithRelationInput> = {
   newest: { createdAt: "desc" },
@@ -11,22 +14,29 @@ const sortToOrderBy: Record<ProductQueryInput["sort"], Prisma.ProductOrderByWith
   popularity: { ratingCount: "desc" },
 };
 
-export async function getProductFilters() {
-  const [brands, categories, variants] = await Promise.all([
-    prisma.brand.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
-    prisma.category.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
-    prisma.productVariant.findMany({
-      where: { isActive: true },
-      select: { size: true, color: true },
-      distinct: ["size", "color"],
-    }),
-  ]);
+// Brand/category list and the set of available sizes/colors change only when an admin
+// edits the catalog — identical on every /shop view regardless of filters applied, so
+// caching avoids paying this 3-query cost on every single navigation to /shop.
+export const getProductFilters = unstable_cache(
+  async () => {
+    const [brands, categories, variants] = await Promise.all([
+      prisma.brand.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
+      prisma.category.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
+      prisma.productVariant.findMany({
+        where: { isActive: true },
+        select: { size: true, color: true },
+        distinct: ["size", "color"],
+      }),
+    ]);
 
-  const sizes = Array.from(new Set(variants.map((v) => v.size))).sort();
-  const colors = Array.from(new Set(variants.map((v) => v.color))).sort();
+    const sizes = Array.from(new Set(variants.map((v) => v.size))).sort();
+    const colors = Array.from(new Set(variants.map((v) => v.color))).sort();
 
-  return { brands, categories, sizes, colors };
-}
+    return { brands, categories, sizes, colors };
+  },
+  ["product-filters"],
+  { tags: [PRODUCT_FILTERS_CACHE_TAG], revalidate: 300 }
+);
 
 export async function listProducts(rawQuery: unknown) {
   const query = productQuerySchema.parse(rawQuery);

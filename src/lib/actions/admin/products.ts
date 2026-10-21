@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth/guards";
+import { PRODUCT_FILTERS_CACHE_TAG } from "@/lib/data/products";
 import { productCreateSchema, productUpdateSchema } from "@/lib/validations/product";
 
 export async function createProductAction(input: unknown) {
@@ -50,6 +51,7 @@ export async function createProductAction(input: unknown) {
 
   revalidatePath("/admin/products");
   revalidatePath("/shop");
+  updateTag(PRODUCT_FILTERS_CACHE_TAG);
   return { ok: true, productId: product.id };
 }
 
@@ -92,6 +94,7 @@ export async function updateProductAction(input: unknown) {
 
   revalidatePath("/admin/products");
   revalidatePath("/shop");
+  updateTag(PRODUCT_FILTERS_CACHE_TAG);
   revalidatePath(`/product/${existing.slug}`);
   return { ok: true };
 }
@@ -110,6 +113,7 @@ export async function deleteProductAction(productId: string) {
 
   revalidatePath("/admin/products");
   revalidatePath("/shop");
+  updateTag(PRODUCT_FILTERS_CACHE_TAG);
   return { ok: true };
 }
 
