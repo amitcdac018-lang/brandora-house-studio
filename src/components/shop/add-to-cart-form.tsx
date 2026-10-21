@@ -12,10 +12,19 @@ type Variant = {
   stock: number;
 };
 
-export function AddToCartForm({ productId, variants }: { productId: string; variants: Variant[] }) {
+export function AddToCartForm({
+  productId,
+  productSlug,
+  variants,
+}: {
+  productId: string;
+  productSlug: string;
+  variants: Variant[];
+}) {
   const router = useRouter();
   const { incrementItemCount, notify } = useCartUi();
   const [isPending, startTransition] = useTransition();
+  const [pendingAction, setPendingAction] = useState<"cart" | "buyNow" | null>(null);
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
 
   const sizes = useMemo(() => Array.from(new Set(variants.map((v) => v.size))), [variants]);
@@ -39,6 +48,7 @@ export function AddToCartForm({ productId, variants }: { productId: string; vari
   function handleAddToCart() {
     if (!selectedVariant) return;
     setMessage(null);
+    setPendingAction("cart");
     startTransition(async () => {
       const result = await addToCartAction({ productId, variantId: selectedVariant.id, quantity: 1 });
       if (result?.error) {
@@ -53,6 +63,26 @@ export function AddToCartForm({ productId, variants }: { productId: string; vari
         incrementItemCount(1);
         notify("Added to your bag", "success", { href: "/cart", label: "View Cart →" });
       }
+    });
+  }
+
+  function handleBuyNow() {
+    if (!selectedVariant) return;
+    setMessage(null);
+    setPendingAction("buyNow");
+    startTransition(async () => {
+      const result = await addToCartAction({ productId, variantId: selectedVariant.id, quantity: 1 });
+      if (result?.error) {
+        if (result.error.includes("sign")) {
+          router.push("/login?callbackUrl=/product/" + productSlug);
+          return;
+        }
+        setMessage({ type: "error", text: result.error });
+        notify(result.error, "error");
+        return;
+      }
+      incrementItemCount(1);
+      router.push("/checkout");
     });
   }
 
@@ -110,14 +140,24 @@ export function AddToCartForm({ productId, variants }: { productId: string; vari
         </p>
       )}
 
-      <button
-        type="button"
-        onClick={handleAddToCart}
-        disabled={outOfStock || isPending}
-        className="w-full rounded-md bg-brand-ink py-3 text-sm font-semibold text-brand-gold-soft transition-colors hover:bg-brand-ink-soft disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {isPending ? "Adding..." : outOfStock ? "Out of Stock" : "Add to Cart"}
-      </button>
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <button
+          type="button"
+          onClick={handleAddToCart}
+          disabled={outOfStock || isPending}
+          className="w-full rounded-md border border-brand-ink bg-white py-3 text-sm font-semibold text-brand-ink transition-colors hover:bg-brand-cream disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isPending && pendingAction === "cart" ? "Adding..." : outOfStock ? "Out of Stock" : "Add to Cart"}
+        </button>
+        <button
+          type="button"
+          onClick={handleBuyNow}
+          disabled={outOfStock || isPending}
+          className="w-full rounded-md bg-brand-ink py-3 text-sm font-semibold text-brand-gold-soft transition-colors hover:bg-brand-ink-soft disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isPending && pendingAction === "buyNow" ? "Processing..." : outOfStock ? "Out of Stock" : "Buy Now"}
+        </button>
+      </div>
 
       {message && (
         <p

@@ -1,8 +1,14 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { Star } from "lucide-react";
 import type { Prisma } from "@prisma/client";
 import { formatPrice, discountedPrice } from "@/lib/format";
+import { addToCartAction } from "@/lib/actions/cart";
+import { useCartUi } from "@/components/cart/cart-ui-context";
 
 type ProductCardData = {
   id: string;
@@ -14,13 +20,44 @@ type ProductCardData = {
   ratingCount: number;
   brand: { name: string };
   images: { url: string; altText: string | null }[];
-  variants?: { stock: number }[];
+  variants?: { id: string; stock: number }[];
 };
 
 export function ProductCard({ product }: { product: ProductCardData }) {
+  const router = useRouter();
+  const { incrementItemCount, notify } = useCartUi();
+  const [isPending, startTransition] = useTransition();
+  const [pendingAction, setPendingAction] = useState<"cart" | "buyNow" | null>(null);
+
   const image = product.images[0];
+  const defaultVariant = product.variants?.find((v) => v.stock > 0);
   const inStock = product.variants ? product.variants.some((v) => v.stock > 0) : true;
   const finalPrice = discountedPrice(Number(product.basePrice), product.discountPct);
+
+  function handleQuickAction(action: "cart" | "buyNow", event: React.MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!defaultVariant) return;
+
+    setPendingAction(action);
+    startTransition(async () => {
+      const result = await addToCartAction({ productId: product.id, variantId: defaultVariant.id, quantity: 1 });
+      if (result?.error) {
+        if (result.error.includes("sign")) {
+          router.push(`/login?callbackUrl=/product/${product.slug}`);
+          return;
+        }
+        notify(result.error, "error");
+        return;
+      }
+      incrementItemCount(1);
+      if (action === "cart") {
+        notify("Added to your bag", "success", { href: "/cart", label: "View Cart →" });
+      } else {
+        router.push("/checkout");
+      }
+    });
+  }
 
   return (
     <Link
@@ -71,6 +108,27 @@ export function ProductCard({ product }: { product: ProductCardData }) {
             </span>
           )}
         </div>
+
+        {product.variants && (
+          <div className="mt-3 flex gap-2" onClick={(e) => e.preventDefault()}>
+            <button
+              type="button"
+              onClick={(e) => handleQuickAction("cart", e)}
+              disabled={!inStock || isPending}
+              className="flex-1 rounded-md border border-brand-ink py-2 text-xs font-semibold text-brand-ink transition-colors hover:bg-brand-cream disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isPending && pendingAction === "cart" ? "Adding..." : "Add to Cart"}
+            </button>
+            <button
+              type="button"
+              onClick={(e) => handleQuickAction("buyNow", e)}
+              disabled={!inStock || isPending}
+              className="flex-1 rounded-md bg-brand-ink py-2 text-xs font-semibold text-brand-gold-soft transition-colors hover:bg-brand-ink-soft disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isPending && pendingAction === "buyNow" ? "..." : "Buy Now"}
+            </button>
+          </div>
+        )}
       </div>
     </Link>
   );

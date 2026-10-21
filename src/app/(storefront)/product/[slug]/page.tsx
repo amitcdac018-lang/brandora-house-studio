@@ -66,7 +66,7 @@ export default async function ProductPage({ params }: PageProps<"/product/[slug]
           <p className="mt-6 text-sm leading-relaxed text-brand-ink-soft">{product.description}</p>
 
           <div className="mt-8">
-            <AddToCartForm productId={product.id} variants={product.variants} />
+            <AddToCartForm productId={product.id} productSlug={product.slug} variants={product.variants} />
           </div>
 
           {product.reviews.length > 0 && (
