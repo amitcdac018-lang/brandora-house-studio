@@ -8,6 +8,7 @@ import { Star } from "lucide-react";
 import type { Prisma } from "@prisma/client";
 import { formatPrice, discountedPrice } from "@/lib/format";
 import { addToCartAction } from "@/lib/actions/cart";
+import { buildLoginRedirectUrl } from "@/lib/auth/login-redirect";
 import { useCartUi } from "@/components/cart/cart-ui-context";
 
 type ProductCardData = {
@@ -44,7 +45,14 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       const result = await addToCartAction({ productId: product.id, variantId: defaultVariant.id, quantity: 1 });
       if (result?.error) {
         if (result.code === "NOT_AUTHENTICATED") {
-          router.push(`/login?callbackUrl=/product/${product.slug}`);
+          router.push(
+            buildLoginRedirectUrl({
+              returnTo: typeof window !== "undefined" ? window.location.pathname + window.location.search : "/shop",
+              productId: product.id,
+              variantId: defaultVariant.id,
+              intent: action,
+            })
+          );
           return;
         }
         notify(result.error, "error");

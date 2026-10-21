@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signInAction } from "@/lib/actions/auth";
+import { usePostLoginRedirect } from "./use-post-login-redirect";
 
 export function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/account";
+  const { resumeAfterLogin } = usePostLoginRedirect();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -25,8 +25,7 @@ export function LoginForm() {
         return;
       }
 
-      router.push(callbackUrl);
-      router.refresh();
+      await resumeAfterLogin();
     });
   }
 
@@ -79,11 +78,7 @@ export function LoginForm() {
           Forgot password?
         </Link>
         <Link
-          href={
-            searchParams.get("callbackUrl")
-              ? `/register?callbackUrl=${encodeURIComponent(searchParams.get("callbackUrl")!)}`
-              : "/register"
-          }
+          href={searchParams.size > 0 ? `/register?${searchParams.toString()}` : "/register"}
           className="text-brand-ink-soft hover:text-brand-gold"
         >
           Create an account

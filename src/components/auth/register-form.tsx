@@ -8,7 +8,6 @@ import { registerSchema } from "@/lib/validations/auth";
 export function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -39,10 +38,9 @@ export function RegisterForm() {
         return;
       }
 
-      const loginUrl = callbackUrl
-        ? `/login?registered=1&callbackUrl=${encodeURIComponent(callbackUrl)}`
-        : "/login?registered=1";
-      router.push(loginUrl);
+      const forwardedParams = new URLSearchParams(searchParams.toString());
+      forwardedParams.set("registered", "1");
+      router.push(`/login?${forwardedParams.toString()}`);
     });
   }
 
@@ -110,7 +108,7 @@ export function RegisterForm() {
       <p className="text-center text-sm text-brand-ink-soft">
         Already have an account?{" "}
         <Link
-          href={callbackUrl ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}` : "/login"}
+          href={searchParams.size > 0 ? `/login?${searchParams.toString()}` : "/login"}
           className="text-brand-gold hover:underline"
         >
           Sign in

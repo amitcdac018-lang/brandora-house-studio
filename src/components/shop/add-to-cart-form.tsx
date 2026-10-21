@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { addToCartAction } from "@/lib/actions/cart";
+import { buildLoginRedirectUrl } from "@/lib/auth/login-redirect";
 import { useCartUi } from "@/components/cart/cart-ui-context";
 
 type Variant = {
@@ -53,7 +54,14 @@ export function AddToCartForm({
       const result = await addToCartAction({ productId, variantId: selectedVariant.id, quantity: 1 });
       if (result?.error) {
         if (result.code === "NOT_AUTHENTICATED") {
-          router.push(`/login?callbackUrl=/product/${productSlug}`);
+          router.push(
+            buildLoginRedirectUrl({
+              returnTo: `/product/${productSlug}`,
+              productId,
+              variantId: selectedVariant.id,
+              intent: "cart",
+            })
+          );
           return;
         }
         setMessage({ type: "error", text: result.error });
@@ -74,7 +82,14 @@ export function AddToCartForm({
       const result = await addToCartAction({ productId, variantId: selectedVariant.id, quantity: 1 });
       if (result?.error) {
         if (result.code === "NOT_AUTHENTICATED") {
-          router.push(`/login?callbackUrl=/product/${productSlug}`);
+          router.push(
+            buildLoginRedirectUrl({
+              returnTo: `/product/${productSlug}`,
+              productId,
+              variantId: selectedVariant.id,
+              intent: "buyNow",
+            })
+          );
           return;
         }
         setMessage({ type: "error", text: result.error });

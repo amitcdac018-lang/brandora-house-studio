@@ -1,15 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { signInWithOtpAction } from "@/lib/actions/auth";
+import { usePostLoginRedirect } from "./use-post-login-redirect";
 
 type Step = "phone" | "code";
 
 export function OtpLoginForm() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/account";
+  const { resumeAfterLogin } = usePostLoginRedirect();
 
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
@@ -58,8 +56,7 @@ export function OtpLoginForm() {
         return;
       }
 
-      router.push(callbackUrl);
-      router.refresh();
+      await resumeAfterLogin();
     });
   }
 
