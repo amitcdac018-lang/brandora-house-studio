@@ -21,7 +21,8 @@ export function TaxonomyManager({
   const [isPending, startTransition] = useTransition();
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  function handleCreate() {
+  function handleCreate(event?: React.FormEvent) {
+    event?.preventDefault();
     setError(null);
     startTransition(async () => {
       const result = await onCreate({ name, slug });
@@ -65,7 +66,7 @@ export function TaxonomyManager({
         ))}
       </div>
 
-      <div className="mt-4 flex gap-2">
+      <form onSubmit={handleCreate} className="mt-4 flex gap-2">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -79,14 +80,13 @@ export function TaxonomyManager({
           className="w-32 rounded-md border border-brand-cream-dark px-3 py-2 text-sm"
         />
         <button
-          type="button"
-          onClick={handleCreate}
+          type="submit"
           disabled={isPending || !name || !slug}
           className="rounded-md bg-brand-ink px-4 py-2 text-sm font-semibold text-brand-gold-soft hover:bg-brand-ink-soft disabled:opacity-50"
         >
           Add
         </button>
-      </div>
+      </form>
       {error && <p className="mt-2 text-sm text-brand-danger">{error}</p>}
     </div>
   );

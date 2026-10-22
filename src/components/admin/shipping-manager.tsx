@@ -22,7 +22,8 @@ export function ShippingManager({ initialRules }: { initialRules: Rule[] }) {
   const [isPending, startTransition] = useTransition();
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  function handleCreate() {
+  function handleCreate(event?: React.FormEvent) {
+    event?.preventDefault();
     setError(null);
     startTransition(async () => {
       const result = await createShippingRuleAction({
@@ -98,50 +99,51 @@ export function ShippingManager({ initialRules }: { initialRules: Rule[] }) {
         ))}
       </div>
 
-      <div className="mt-4 grid grid-cols-5 gap-2">
-        <input
-          placeholder="Name"
-          value={form.name}
-          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-          className="rounded-md border border-brand-cream-dark px-2 py-1.5 text-sm"
-        />
-        <input
-          placeholder="Min ₹"
-          type="number"
-          value={form.minOrderValue}
-          onChange={(e) => setForm((f) => ({ ...f, minOrderValue: e.target.value }))}
-          className="rounded-md border border-brand-cream-dark px-2 py-1.5 text-sm"
-        />
-        <input
-          placeholder="Max ₹ (optional)"
-          type="number"
-          value={form.maxOrderValue}
-          onChange={(e) => setForm((f) => ({ ...f, maxOrderValue: e.target.value }))}
-          className="rounded-md border border-brand-cream-dark px-2 py-1.5 text-sm"
-        />
-        <input
-          placeholder="Charge ₹"
-          type="number"
-          value={form.charge}
-          onChange={(e) => setForm((f) => ({ ...f, charge: e.target.value }))}
-          className="rounded-md border border-brand-cream-dark px-2 py-1.5 text-sm"
-        />
-        <input
-          placeholder="Days"
-          type="number"
-          value={form.estimatedDays}
-          onChange={(e) => setForm((f) => ({ ...f, estimatedDays: e.target.value }))}
-          className="rounded-md border border-brand-cream-dark px-2 py-1.5 text-sm"
-        />
-      </div>
-      <button
-        type="button"
-        onClick={handleCreate}
-        disabled={isPending || !form.name}
-        className="mt-3 rounded-md bg-brand-ink px-4 py-2 text-sm font-semibold text-brand-gold-soft hover:bg-brand-ink-soft disabled:opacity-50"
-      >
-        Add Rule
-      </button>
+      <form onSubmit={handleCreate}>
+        <div className="mt-4 grid grid-cols-5 gap-2">
+          <input
+            placeholder="Name"
+            value={form.name}
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            className="rounded-md border border-brand-cream-dark px-2 py-1.5 text-sm"
+          />
+          <input
+            placeholder="Min ₹"
+            type="number"
+            value={form.minOrderValue}
+            onChange={(e) => setForm((f) => ({ ...f, minOrderValue: e.target.value }))}
+            className="rounded-md border border-brand-cream-dark px-2 py-1.5 text-sm"
+          />
+          <input
+            placeholder="Max ₹ (optional)"
+            type="number"
+            value={form.maxOrderValue}
+            onChange={(e) => setForm((f) => ({ ...f, maxOrderValue: e.target.value }))}
+            className="rounded-md border border-brand-cream-dark px-2 py-1.5 text-sm"
+          />
+          <input
+            placeholder="Charge ₹"
+            type="number"
+            value={form.charge}
+            onChange={(e) => setForm((f) => ({ ...f, charge: e.target.value }))}
+            className="rounded-md border border-brand-cream-dark px-2 py-1.5 text-sm"
+          />
+          <input
+            placeholder="Days"
+            type="number"
+            value={form.estimatedDays}
+            onChange={(e) => setForm((f) => ({ ...f, estimatedDays: e.target.value }))}
+            className="rounded-md border border-brand-cream-dark px-2 py-1.5 text-sm"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={isPending || !form.name}
+          className="mt-3 rounded-md bg-brand-ink px-4 py-2 text-sm font-semibold text-brand-gold-soft hover:bg-brand-ink-soft disabled:opacity-50"
+        >
+          Add Rule
+        </button>
+      </form>
       {error && <p className="mt-2 text-sm text-brand-danger">{error}</p>}
     </div>
   );

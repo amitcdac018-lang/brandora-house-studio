@@ -14,7 +14,8 @@ export function SettingsForm({ initialValues }: { initialValues: Record<string, 
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState<string | null>(null);
 
-  function handleSave(key: string) {
+  function handleSave(key: string, event?: React.FormEvent) {
+    event?.preventDefault();
     setSaved(null);
     startTransition(async () => {
       await updateSiteSettingAction({ key, value: values[key] ?? "" });
@@ -25,7 +26,7 @@ export function SettingsForm({ initialValues }: { initialValues: Record<string, 
   return (
     <div className="space-y-4 rounded-xl border border-brand-cream-dark bg-white p-5">
       {fields.map((field) => (
-        <div key={field.key} className="flex items-end gap-2">
+        <form key={field.key} onSubmit={(e) => handleSave(field.key, e)} className="flex items-end gap-2">
           <div className="flex-1">
             <label htmlFor={field.key} className="block text-sm font-medium text-brand-ink">
               {field.label}
@@ -38,15 +39,14 @@ export function SettingsForm({ initialValues }: { initialValues: Record<string, 
             />
           </div>
           <button
-            type="button"
-            onClick={() => handleSave(field.key)}
+            type="submit"
             disabled={isPending}
             className="rounded-md bg-brand-ink px-4 py-2 text-sm font-semibold text-brand-gold-soft hover:bg-brand-ink-soft disabled:opacity-50"
           >
             Save
           </button>
           {saved === field.key && <span className="text-sm text-brand-success">Saved</span>}
-        </div>
+        </form>
       ))}
     </div>
   );

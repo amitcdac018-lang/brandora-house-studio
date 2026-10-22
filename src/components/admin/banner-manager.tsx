@@ -21,7 +21,8 @@ export function BannerManager({ initialBanners }: { initialBanners: Banner[] }) 
   const [isPending, startTransition] = useTransition();
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  function handleCreate() {
+  function handleCreate(event?: React.FormEvent) {
+    event?.preventDefault();
     setError(null);
     startTransition(async () => {
       const result = await createBannerAction({
@@ -92,7 +93,7 @@ export function BannerManager({ initialBanners }: { initialBanners: Banner[] }) 
         ))}
       </div>
 
-      <div className="mt-6 max-w-lg rounded-xl border border-brand-cream-dark bg-white p-5">
+      <form onSubmit={handleCreate} className="mt-6 max-w-lg rounded-xl border border-brand-cream-dark bg-white p-5">
         <h2 className="font-semibold text-brand-ink">Add Banner</h2>
         <div className="mt-3 space-y-2">
           <input
@@ -121,15 +122,14 @@ export function BannerManager({ initialBanners }: { initialBanners: Banner[] }) 
           />
         </div>
         <button
-          type="button"
-          onClick={handleCreate}
+          type="submit"
           disabled={isPending || !form.title || !form.imageUrl}
           className="mt-3 rounded-md bg-brand-ink px-4 py-2 text-sm font-semibold text-brand-gold-soft hover:bg-brand-ink-soft disabled:opacity-50"
         >
           Add Banner
         </button>
         {error && <p className="mt-2 text-sm text-brand-danger">{error}</p>}
-      </div>
+      </form>
     </div>
   );
 }

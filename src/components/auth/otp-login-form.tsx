@@ -45,7 +45,8 @@ export function OtpLoginForm() {
     });
   }
 
-  function handleSendCode() {
+  function handleSendCode(event?: React.FormEvent) {
+    event?.preventDefault();
     sendCode(() => setStep("code"));
   }
 
@@ -54,7 +55,8 @@ export function OtpLoginForm() {
     sendCode(() => setResendMessage("A new code has been sent."));
   }
 
-  function handleVerifyCode() {
+  function handleVerifyCode(event?: React.FormEvent) {
+    event?.preventDefault();
     setError(null);
     startTransition(async () => {
       const verifyResponse = await fetch("/api/auth/otp/verify", {
@@ -82,7 +84,7 @@ export function OtpLoginForm() {
 
   if (step === "phone") {
     return (
-      <div className="space-y-4">
+      <form onSubmit={handleSendCode} className="space-y-4">
         <div>
           <label htmlFor="otp-phone" className="block text-sm font-medium text-brand-ink">
             Phone Number
@@ -106,8 +108,7 @@ export function OtpLoginForm() {
         )}
 
         <button
-          type="button"
-          onClick={handleSendCode}
+          type="submit"
           disabled={isPending || !phone}
           className="w-full rounded-md bg-brand-ink py-2.5 text-sm font-semibold text-brand-gold-soft hover:bg-brand-ink-soft disabled:opacity-50"
         >
@@ -119,12 +120,12 @@ export function OtpLoginForm() {
             Having trouble? Use email &amp; password sign-in instead.
           </p>
         )}
-      </div>
+      </form>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <form onSubmit={handleVerifyCode} className="space-y-4">
       <p className="text-sm text-brand-ink-soft">
         Enter the code sent to <span className="font-medium text-brand-ink">{phone}</span>.
       </p>
@@ -161,8 +162,7 @@ export function OtpLoginForm() {
       )}
 
       <button
-        type="button"
-        onClick={handleVerifyCode}
+        type="submit"
         disabled={isPending || !code}
         className="w-full rounded-md bg-brand-ink py-2.5 text-sm font-semibold text-brand-gold-soft hover:bg-brand-ink-soft disabled:opacity-50"
       >
@@ -192,6 +192,6 @@ export function OtpLoginForm() {
           Use a different number
         </button>
       </div>
-    </div>
+    </form>
   );
 }
