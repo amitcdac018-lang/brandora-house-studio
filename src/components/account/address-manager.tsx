@@ -21,18 +21,31 @@ export function AddressManager({ initialAddresses }: { initialAddresses: Address
   const [addresses, setAddresses] = useState(initialAddresses);
   const [showForm, setShowForm] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   function handleDelete(id: string) {
+    setError(null);
+    setDeletingId(id);
     startTransition(async () => {
       const result = await deleteAddressAction(id);
       if (result?.ok) {
         setAddresses((prev) => prev.filter((a) => a.id !== id));
+      } else if (result?.error) {
+        setError(result.error);
       }
+      setDeletingId(null);
     });
   }
 
   return (
     <div>
+      {error && (
+        <p role="alert" className="mb-3 rounded-md bg-brand-danger/10 p-3 text-sm text-brand-danger">
+          {error}
+        </p>
+      )}
+
       <div className="space-y-3">
         {addresses.map((address) => (
           <div key={address.id} className="flex items-start justify-between rounded-lg border border-brand-cream-dark p-4">
@@ -49,9 +62,9 @@ export function AddressManager({ initialAddresses }: { initialAddresses: Address
             <button
               type="button"
               onClick={() => handleDelete(address.id)}
-              disabled={isPending}
+              disabled={isPending && deletingId === address.id}
               aria-label={`Delete address for ${address.fullName}`}
-              className="text-brand-danger hover:underline"
+              className="text-brand-danger hover:underline disabled:opacity-50"
             >
               <Trash2 className="h-4 w-4" />
             </button>

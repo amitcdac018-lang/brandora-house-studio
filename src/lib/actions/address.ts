@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth/guards";
+import { requireUser, UnauthorizedError } from "@/lib/auth/guards";
 import { addressSchema } from "@/lib/validations/checkout";
 
 export async function createAddressAction(input: unknown) {
@@ -26,14 +27,34 @@ export async function createAddressAction(input: unknown) {
 }
 
 export async function deleteAddressAction(addressId: string) {
-  const user = await requireUser();
+  let user;
+  try {
+    user = await requireUser();
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      return { error: "Please sign in to manage your addresses." };
+    }
+    throw error;
+  }
 
   const address = await prisma.address.findUnique({ where: { id: addressId } });
   if (!address || address.userId !== user.id) {
     return { error: "Address not found." };
   }
 
-  await prisma.address.delete({ where: { id: addressId } });
+  try {
+    await prisma.address.delete({ where: { id: addressId } });
+  } catch (error) {
+    // P2003: foreign key constraint failed — this address is still referenced by at
+    // least one order (Order.addressId has no onDelete: Cascade, by design: deleting an
+    // address must never silently corrupt a past order's shipping record). Surface a
+    // clear, actionable message instead of letting the raw DB error crash the page.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+      return { error: "This address is used on a past order and can't be deleted. You can add a new address instead." };
+    }
+    throw error;
+  }
+
   revalidatePath("/account/addresses");
   return { ok: true };
 }
