@@ -84,7 +84,7 @@ export function AccountMenu() {
         aria-expanded={open}
         aria-controls="account-menu"
         aria-label="My account"
-        className="flex items-center gap-1 text-brand-ink-soft transition-colors hover:text-brand-gold"
+        className="-m-2.5 flex h-11 items-center gap-1 px-2.5 text-brand-ink-soft transition-colors hover:text-brand-gold"
       >
         <User className="h-5 w-5" />
         <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -107,7 +107,7 @@ export function AccountMenu() {
             href="/account"
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-4 py-2 text-sm text-brand-ink hover:bg-brand-cream"
+            className="flex min-h-11 items-center gap-2 px-4 py-2.5 text-sm text-brand-ink hover:bg-brand-cream"
           >
             <UserCircle className="h-4 w-4" />
             My Profile
@@ -117,7 +117,7 @@ export function AccountMenu() {
             role="menuitem"
             onClick={handleSignOut}
             disabled={isPending}
-            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-brand-danger hover:bg-brand-danger/10 disabled:opacity-50"
+            className="flex min-h-11 w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-brand-danger hover:bg-brand-danger/10 disabled:opacity-50"
           >
             <LogOut className="h-4 w-4" />
             {isPending ? "Signing out..." : "Logout"}

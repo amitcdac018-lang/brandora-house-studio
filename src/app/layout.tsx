@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
@@ -35,6 +35,19 @@ export const metadata: Metadata = {
     description:
       "Premium footwear from Campus, Nike, Aqualite and Action Shoes. Discover, style, inspire.",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Brandora House Studio",
+  },
+};
+
+export const viewport: Viewport = {
+  // Required for env(safe-area-inset-*) to resolve to anything other than 0px on
+  // notched/Dynamic-Island iPhones — without this, fixed/sticky elements near the
+  // screen edges (toasts, the home-indicator area) ignore the safe area entirely.
+  viewportFit: "cover",
+  themeColor: "#f7f3ec",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

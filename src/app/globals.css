@@ -35,9 +35,31 @@ body {
   background: var(--brand-cream);
   color: var(--brand-ink);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  /* Suppress iOS Safari's default gray tap-highlight flash on every tappable element —
+     :focus-visible below still provides a clear, accessible interaction indicator. */
+  -webkit-tap-highlight-color: transparent;
 }
 
 :focus-visible {
   outline: 2px solid var(--brand-gold);
   outline-offset: 2px;
+}
+
+/* iOS Safari auto-zooms the page when a focused text input's font-size is below 16px.
+   Force 16px on every form control regardless of Tailwind text-size utility applied to
+   it (text-sm/text-xs are 14px/12px and would otherwise trigger the zoom on every form
+   in the app — checkout, login, OTP, search, admin). Labels/helper text are unaffected. */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Admin tables and other horizontally-scrollable containers (overflow-x-auto) get
+   native-feeling momentum scrolling on iOS. */
+.overflow-x-auto,
+.overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
 }

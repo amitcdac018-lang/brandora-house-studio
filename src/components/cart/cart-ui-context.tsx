@@ -66,7 +66,7 @@ export function CartUiProvider({ children }: { children: React.ReactNode }) {
       {children}
       <div
         aria-live="polite"
-        className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2 sm:bottom-6 sm:right-6"
+        className="pointer-events-none fixed right-4 z-50 flex flex-col gap-2 bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:right-6 sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom))]"
       >
         {toasts.map((toast) => (
           <div

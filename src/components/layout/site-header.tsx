@@ -70,7 +70,7 @@ function MobileNav() {
         aria-expanded={open}
         aria-controls="mobile-nav-menu"
         aria-label={open ? "Close menu" : "Open menu"}
-        className="text-brand-ink-soft transition-colors hover:text-brand-gold"
+        className="-m-2.5 flex h-11 w-11 items-center justify-center text-brand-ink-soft transition-colors hover:text-brand-gold"
       >
         {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
       </button>
@@ -100,17 +100,19 @@ function CartLink() {
     <Link
       href="/cart"
       aria-label={`Shopping cart${itemCount > 0 ? `, ${itemCount} item${itemCount === 1 ? "" : "s"}` : ""}`}
-      className="relative text-brand-ink-soft transition-colors hover:text-brand-gold"
+      className="-m-2.5 flex h-11 w-11 items-center justify-center text-brand-ink-soft transition-colors hover:text-brand-gold"
     >
-      <ShoppingBag className="h-5 w-5" />
-      {itemCount > 0 && (
-        <span
-          aria-hidden="true"
-          className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-gold px-1 text-[10px] font-semibold text-brand-ink"
-        >
-          {itemCount > 99 ? "99+" : itemCount}
-        </span>
-      )}
+      <span className="relative">
+        <ShoppingBag className="h-5 w-5" />
+        {itemCount > 0 && (
+          <span
+            aria-hidden="true"
+            className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-gold px-1 text-[10px] font-semibold text-brand-ink"
+          >
+            {itemCount > 99 ? "99+" : itemCount}
+          </span>
+        )}
+      </span>
     </Link>
   );
 }
@@ -136,7 +138,7 @@ export function SiteHeader() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Brandora House Studio on Instagram"
-            className="text-brand-ink-soft transition-colors hover:text-brand-gold"
+            className="-m-2.5 flex h-11 w-11 items-center justify-center text-brand-ink-soft transition-colors hover:text-brand-gold"
           >
             <InstagramIcon />
           </a>

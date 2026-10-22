@@ -116,7 +116,7 @@ export function AddToCartForm({
               type="button"
               onClick={() => handleSizeChange(size)}
               aria-pressed={selectedSize === size}
-              className={`h-10 min-w-10 rounded-md border px-3 text-sm ${
+              className={`h-11 min-w-11 rounded-md border px-3 text-sm ${
                 selectedSize === size
                   ? "border-brand-ink bg-brand-ink text-brand-gold-soft"
                   : "border-brand-cream-dark text-brand-ink-soft hover:border-brand-gold"
@@ -139,7 +139,7 @@ export function AddToCartForm({
               type="button"
               onClick={() => setSelectedColor(v.color)}
               aria-pressed={selectedColor === v.color}
-              className={`rounded-md border px-3 py-2 text-sm ${
+              className={`min-h-11 rounded-md border px-3 py-2 text-sm ${
                 selectedColor === v.color
                   ? "border-brand-ink bg-brand-ink text-brand-gold-soft"
                   : "border-brand-cream-dark text-brand-ink-soft hover:border-brand-gold"

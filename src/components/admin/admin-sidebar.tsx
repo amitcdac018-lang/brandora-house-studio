@@ -88,7 +88,7 @@ export function AdminSidebar() {
           aria-expanded={open}
           aria-controls="admin-mobile-nav"
           aria-label={open ? "Close admin menu" : "Open admin menu"}
-          className="text-brand-gold-soft"
+          className="-m-2.5 flex h-11 w-11 items-center justify-center text-brand-gold-soft"
         >
           {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
