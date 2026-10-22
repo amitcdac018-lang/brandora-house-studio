@@ -6,6 +6,25 @@ import { prisma } from "@/lib/db";
 import { requireUser, UnauthorizedError } from "@/lib/auth/guards";
 import { addressSchema } from "@/lib/validations/checkout";
 
+/**
+ * A delete blocked by Order_addressId_fkey's ON DELETE RESTRICT doesn't reliably surface
+ * as Prisma's structured P2003 PrismaClientKnownRequestError — in production this came
+ * through instead as a PrismaClientUnknownRequestError wrapping the raw Postgres error
+ * (SQLSTATE 23001 "restrict_violation", message "violates RESTRICT setting of foreign key
+ * constraint"), which `instanceof ... && error.code === "P2003"` never matches. Check both
+ * shapes: the structured code when Prisma does provide one, and the Postgres error text
+ * (which is standard wording, not tied to this one constraint name) as a fallback.
+ */
+function isForeignKeyRestrictError(error: unknown): boolean {
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+    return true;
+  }
+  if (error instanceof Error) {
+    return /foreign key constraint|violates.*restrict/i.test(error.message);
+  }
+  return false;
+}
+
 export async function createAddressAction(input: unknown) {
   const user = await requireUser();
   const parsed = addressSchema.safeParse(input);
@@ -45,11 +64,11 @@ export async function deleteAddressAction(addressId: string) {
   try {
     await prisma.address.delete({ where: { id: addressId } });
   } catch (error) {
-    // P2003: foreign key constraint failed — this address is still referenced by at
-    // least one order (Order.addressId has no onDelete: Cascade, by design: deleting an
-    // address must never silently corrupt a past order's shipping record). Surface a
-    // clear, actionable message instead of letting the raw DB error crash the page.
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+    if (isForeignKeyRestrictError(error)) {
+      // This address is still referenced by at least one order (Order.addressId has no
+      // onDelete: Cascade, by design: deleting an address must never silently corrupt a
+      // past order's shipping record). Surface a clear, actionable message instead of
+      // letting the raw DB error crash the page.
       return { error: "This address is used on a past order and can't be deleted. You can add a new address instead." };
     }
     throw error;

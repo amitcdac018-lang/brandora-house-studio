@@ -32,7 +32,7 @@ describe("deleteAddressAction", () => {
     prismaMock.address.delete.mockReset();
   });
 
-  it("returns a friendly error instead of crashing when the address is still used on a past order", async () => {
+  it("returns a friendly error instead of crashing when the address is still used on a past order (structured P2003)", async () => {
     requireUserMock.mockResolvedValue({ id: USER_ID });
     prismaMock.address.findUnique.mockResolvedValue({ id: ADDRESS_ID, userId: USER_ID });
     prismaMock.address.delete.mockRejectedValue(
@@ -40,6 +40,27 @@ describe("deleteAddressAction", () => {
         code: "P2003",
         clientVersion: "test",
       })
+    );
+
+    const { deleteAddressAction } = await import("../address");
+    const result = await deleteAddressAction(ADDRESS_ID);
+
+    expect(result).toEqual({
+      error: "This address is used on a past order and can't be deleted. You can add a new address instead.",
+    });
+  });
+
+  it("returns the same friendly error for the real-world PrismaClientUnknownRequestError shape (confirmed in production)", async () => {
+    // Prisma 6.19.3 does NOT always wrap an ON DELETE RESTRICT violation as a structured
+    // P2003 PrismaClientKnownRequestError — in production this came through instead as a
+    // PrismaClientUnknownRequestError whose message embeds the raw Postgres error text.
+    // This is the exact message captured from Vercel's runtime logs for this bug.
+    requireUserMock.mockResolvedValue({ id: USER_ID });
+    prismaMock.address.findUnique.mockResolvedValue({ id: ADDRESS_ID, userId: USER_ID });
+    prismaMock.address.delete.mockRejectedValue(
+      new Error(
+        'Invalid `prisma.address.delete()` invocation:\n\n\nError occurred during query execution:\nConnectorError(ConnectorError { user_facing_error: None, kind: QueryError(PostgresError { code: "23001", message: "update or delete on table \\"Address\\" violates RESTRICT setting of foreign key constraint \\"Order_addressId_fkey\\" on table \\"Order\\"", severity: "ERROR", detail: Some("Key (id)=(cmvgdzt3e0005l50769ns8k95) is referenced from table \\"Order\\"."), column: None, hint: None }), transient: false })'
+      )
     );
 
     const { deleteAddressAction } = await import("../address");
