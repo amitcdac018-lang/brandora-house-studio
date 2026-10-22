@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { InstagramIcon } from "@/components/icons/instagram-icon";
+import { WhatsAppIcon } from "@/components/icons/whatsapp-icon";
 import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = { title: "Contact Us" };
@@ -20,6 +21,18 @@ export default function ContactPage() {
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-brand-gold">Phone</p>
           <p className="mt-1 text-brand-ink">{siteConfig.supportPhone}</p>
+        </div>
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-wide text-brand-gold">WhatsApp</p>
+          <a
+            href={siteConfig.whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1 flex items-center gap-2 text-brand-ink hover:text-brand-gold"
+          >
+            <WhatsAppIcon className="h-4 w-4" />
+            Chat with us
+          </a>
         </div>
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-brand-gold">Instagram</p>

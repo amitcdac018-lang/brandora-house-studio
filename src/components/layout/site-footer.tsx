@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { InstagramIcon } from "@/components/icons/instagram-icon";
+import { WhatsAppIcon } from "@/components/icons/whatsapp-icon";
 import { siteConfig } from "@/lib/site-config";
 
 const policyLinks = [
@@ -57,6 +58,17 @@ export function SiteFooter() {
               <li><Link href="/contact" className="hover:text-brand-gold">Contact Us</Link></li>
               <li>{siteConfig.supportEmail}</li>
               <li>{siteConfig.supportPhone}</li>
+              <li>
+                <a
+                  href={siteConfig.whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 hover:text-brand-gold"
+                >
+                  <WhatsAppIcon className="h-4 w-4" />
+                  Chat on WhatsApp
+                </a>
+              </li>
             </ul>
           </div>
         </div>
