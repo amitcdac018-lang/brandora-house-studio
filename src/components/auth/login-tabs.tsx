@@ -32,11 +32,7 @@ export function LoginTabs() {
         </button>
       </div>
 
-      {/* Fixed min-height reserved for the tallest form/step (LoginForm) so switching
-          tabs — or the OTP form's phone->code step — never visibly resizes the card.
-          Without this the page's vertical centering (see login/page.tsx) turns every
-          height change into a jarring jump of the whole box up/down the screen. */}
-      <div className="min-h-84">{tab === "phone" ? <OtpLoginForm /> : <LoginForm />}</div>
+      {tab === "phone" ? <OtpLoginForm /> : <LoginForm />}
     </div>
   );
 }
