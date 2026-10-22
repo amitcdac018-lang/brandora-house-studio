@@ -16,6 +16,16 @@
   --brand-danger: #b3261e;
 }
 
+html {
+  /* Always reserve space for the vertical scrollbar, even on pages short enough not to
+     need one yet. Without this, any page whose content height changes across the
+     viewport-height threshold (e.g. the login form resizing when switching tabs) causes
+     the scrollbar to appear/disappear, shifting all centered content — including the
+     sticky header and footer — sideways by the scrollbar's width. That sideways shift is
+     what reads as the header/footer "jumping." */
+  scrollbar-gutter: stable;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

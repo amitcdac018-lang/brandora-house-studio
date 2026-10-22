@@ -59,9 +59,10 @@ export function AccountMenu() {
   }
 
   if (!session) {
-    // Session status not yet known — render a neutral placeholder so there's no
-    // flash between "Sign In" and the dropdown once the fetch resolves.
-    return <span className="block h-5 w-5" aria-hidden="true" />;
+    // Session status not yet known — render a placeholder matching the authenticated
+    // button's actual box size (h-11, same -m-2.5 offset) so the header doesn't visibly
+    // resize once the fetch resolves a moment after the page loads.
+    return <span className="-m-2.5 block h-11 w-11" aria-hidden="true" />;
   }
 
   if (!session.authenticated) {
