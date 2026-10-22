@@ -28,7 +28,7 @@ export function CartUiProvider({ children }: { children: React.ReactNode }) {
   // never forces every page under the storefront layout into dynamic rendering.
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/cart/count")
+    fetch("/api/cart/count", { cache: "no-store" })
       .then((res) => res.json())
       .then((data: { count?: number }) => {
         if (!cancelled && typeof data.count === "number") setItemCount(data.count);

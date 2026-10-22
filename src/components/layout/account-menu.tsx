@@ -23,7 +23,7 @@ export function AccountMenu() {
   // reasoning as the cart badge in cart-ui-context.tsx.
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/auth/session-summary")
+    fetch("/api/auth/session-summary", { cache: "no-store" })
       .then((res) => res.json())
       .then((data: SessionSummary) => {
         if (!cancelled) setSession(data);
