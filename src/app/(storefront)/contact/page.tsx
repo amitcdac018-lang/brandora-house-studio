@@ -43,7 +43,7 @@ export default function ContactPage() {
             className="mt-1 flex items-center gap-2 text-brand-ink hover:text-brand-gold"
           >
             <InstagramIcon className="h-4 w-4" />
-            @brandora_house_studio
+            @{siteConfig.instagramHandle}
           </a>
         </div>
       </div>

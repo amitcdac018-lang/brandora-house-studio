@@ -137,7 +137,7 @@ export function SiteHeader() {
             href={siteConfig.instagramUrl}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Brandora House Studio on Instagram"
+            aria-label="Elora Kicks on Instagram"
             className="-m-2.5 flex h-11 w-11 items-center justify-center text-brand-ink-soft transition-colors hover:text-brand-gold"
           >
             <InstagramIcon />

@@ -17,7 +17,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <p className="font-display text-xl">Brandora House Studio</p>
+            <p className="font-display text-xl">{siteConfig.name}</p>
             <p className="mt-2 text-sm text-brand-cream/70">{siteConfig.tagline}</p>
             <a
               href={siteConfig.instagramUrl}
@@ -26,7 +26,7 @@ export function SiteFooter() {
               className="mt-4 inline-flex items-center gap-2 text-sm text-brand-gold-soft hover:text-brand-gold"
             >
               <InstagramIcon className="h-4 w-4" />
-              @brandora_house_studio
+              @{siteConfig.instagramHandle}
             </a>
           </div>
 
@@ -74,7 +74,7 @@ export function SiteFooter() {
         </div>
 
         <p className="mt-10 border-t border-white/10 pt-6 text-xs text-brand-cream/50">
-          &copy; {new Date().getFullYear()} Brandora House Studio. All rights reserved.
+          &copy; {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
         </p>
       </div>
     </footer>

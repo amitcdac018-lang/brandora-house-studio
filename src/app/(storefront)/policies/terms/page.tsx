@@ -7,7 +7,7 @@ export default function TermsPage() {
   return (
     <PolicyLayout title="Terms & Conditions" updatedAt="Draft — pending legal review">
       <p>
-        These draft terms govern your use of the Brandora House Studio website and the purchase of
+        These draft terms govern your use of the Elora Kicks website and the purchase of
         products through it. Replace this placeholder with terms reviewed by qualified legal
         counsel before launch.
       </p>
@@ -31,7 +31,7 @@ export default function TermsPage() {
 
       <h2>Limitation of Liability</h2>
       <p>
-        Brandora House Studio is not liable for indirect or consequential damages arising from use
+        Elora Kicks is not liable for indirect or consequential damages arising from use
         of the site, to the maximum extent permitted by law.
       </p>
     </PolicyLayout>

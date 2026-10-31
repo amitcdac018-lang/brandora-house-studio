@@ -1,21 +1,23 @@
+import Image from "next/image";
 import Link from "next/link";
 
-/**
- * Placeholder wordmark logo until real Instagram brand assets are supplied.
- * Swap this for an <Image> of the authorized logo file once available.
- */
 export function BrandLogo({ className = "" }: { className?: string }) {
   return (
     <Link
       href="/"
-      className={`flex items-center gap-2 font-display text-xl tracking-wide text-brand-ink ${className}`}
-      aria-label="Brandora House Studio home"
+      className={`flex items-center ${className}`}
+      aria-label="Elora Kicks home"
     >
-      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-ink text-brand-gold-soft font-display text-base">
-        B
-      </span>
-      <span className="hidden sm:inline">
-        Brandora <span className="text-brand-gold">House</span> Studio
+      <Image
+        src="/logo-mark.png"
+        alt="Elora Kicks"
+        width={160}
+        height={160}
+        priority
+        className="h-10 w-10 object-contain sm:h-11 sm:w-11"
+      />
+      <span className="ml-2 hidden font-display text-xl tracking-wide text-brand-ink sm:inline">
+        Elora <span className="text-brand-gold">Kicks</span>
       </span>
     </Link>
   );

@@ -22,15 +22,15 @@ const SAMPLE_SHOE_IMAGES = [
 ];
 
 async function main() {
-  console.log("Seeding Brandora House Studio (development sample data)...");
+  console.log("Seeding Elora Kicks (development sample data)...");
 
   // ----- Admin + sample customer -----
   const adminPasswordHash = await bcrypt.hash("Admin@12345", 12);
   await prisma.user.upsert({
-    where: { email: "admin@brandorahousestudio.com" },
+    where: { email: "admin@elorakicks.com" },
     create: {
-      email: "admin@brandorahousestudio.com",
-      name: "Brandora Admin",
+      email: "admin@elorakicks.com",
+      name: "Elora Admin",
       passwordHash: adminPasswordHash,
       role: "ADMIN",
     },
@@ -138,7 +138,7 @@ async function main() {
   }
 
   console.log("Seed complete.");
-  console.log("Admin login: admin@brandorahousestudio.com / Admin@12345");
+  console.log("Admin login: admin@elorakicks.com / Admin@12345");
   console.log("Customer login: customer@example.com / Customer@12345");
 }
 

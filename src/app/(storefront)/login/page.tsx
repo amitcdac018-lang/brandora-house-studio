@@ -18,7 +18,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12 sm:px-6">
       <h1 className="font-display text-3xl text-brand-ink">Welcome Back</h1>
-      <p className="mt-1 text-sm text-brand-ink-soft">Sign in to continue to Brandora House Studio.</p>
+      <p className="mt-1 text-sm text-brand-ink-soft">Sign in to continue to Elora Kicks.</p>
       <div className="mt-8 rounded-xl border border-brand-cream-dark bg-white p-6">
         <Suspense fallback={null}>
           <LoginTabs />

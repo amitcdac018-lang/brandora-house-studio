@@ -17,28 +17,28 @@ const siteUrl = process.env.APP_BASE_URL ?? "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Brandora House Studio | Premium Shoes",
-    template: "%s | Brandora House Studio",
+    default: "Elora Kicks | Premium Shoes",
+    template: "%s | Elora Kicks",
   },
   description:
-    "Brandora House Studio — premium footwear from Campus, Nike, Aqualite and Action Shoes. Discover, style, inspire.",
+    "Elora Kicks — premium footwear from Campus, Nike, Aqualite and Action Shoes. Discover, style, inspire.",
   openGraph: {
-    title: "Brandora House Studio",
+    title: "Elora Kicks",
     description:
       "Premium footwear from Campus, Nike, Aqualite and Action Shoes. Discover, style, inspire.",
-    siteName: "Brandora House Studio",
+    siteName: "Elora Kicks",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Brandora House Studio",
+    title: "Elora Kicks",
     description:
       "Premium footwear from Campus, Nike, Aqualite and Action Shoes. Discover, style, inspire.",
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Brandora House Studio",
+    title: "Elora Kicks",
   },
 };
 

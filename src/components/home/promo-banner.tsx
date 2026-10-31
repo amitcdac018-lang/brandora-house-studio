@@ -19,7 +19,7 @@ export function PromoBanner() {
           className="flex items-center gap-2 rounded-md bg-brand-ink px-6 py-3 text-sm font-semibold text-brand-gold-soft hover:bg-brand-ink-soft"
         >
           <InstagramIcon className="h-4 w-4" />
-          @brandora_house_studio
+          @{siteConfig.instagramHandle}
         </Link>
       </div>
     </section>

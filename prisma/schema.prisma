@@ -1,4 +1,4 @@
-// Brandora House Studio — Prisma schema
+// Elora Kicks — Prisma schema
 // Run `npx prisma migrate dev` after setting DATABASE_URL in .env
 
 generator client {

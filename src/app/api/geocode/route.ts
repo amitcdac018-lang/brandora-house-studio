@@ -36,7 +36,7 @@ export async function GET(request: Request) {
       `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&addressdetails=1`,
       {
         headers: {
-          "User-Agent": "BrandoraHouseStudio/1.0 (checkout address autofill)",
+          "User-Agent": "EloraKicks/1.0 (checkout address autofill)",
           "Accept-Language": "en",
         },
       }

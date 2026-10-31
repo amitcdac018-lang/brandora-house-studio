@@ -79,7 +79,7 @@ export function AdminSidebar() {
       <div className="flex items-center justify-between border-b border-brand-cream-dark bg-brand-ink px-4 py-3 lg:hidden">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-brand-gold" />
-          <p className="font-display text-base leading-tight text-brand-gold-soft">Brandora Admin</p>
+          <p className="font-display text-base leading-tight text-brand-gold-soft">Elora Admin</p>
         </div>
         <button
           ref={triggerRef}
@@ -109,7 +109,7 @@ export function AdminSidebar() {
         <div className="flex items-center gap-2 border-b border-brand-cream-dark bg-brand-ink px-6 py-5">
           <ShieldCheck className="h-5 w-5 text-brand-gold" />
           <div>
-            <p className="font-display text-lg leading-tight text-brand-gold-soft">Brandora Admin</p>
+            <p className="font-display text-lg leading-tight text-brand-gold-soft">Elora Admin</p>
             <p className="text-[11px] uppercase tracking-wide text-brand-cream/60">Admin Mode</p>
           </div>
         </div>

@@ -42,7 +42,7 @@ export function CheckoutButton({ addressId, disabled }: { addressId: string | nu
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: Math.round((result.amount ?? 0) * 100),
         currency: "INR",
-        name: "Brandora House Studio",
+        name: "Elora Kicks",
         order_id: result.razorpayOrderId,
         handler: async (response: {
           razorpay_order_id: string;

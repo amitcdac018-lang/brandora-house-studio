@@ -1,10 +1,10 @@
-# Brandora House Studio
+# Elora Kicks
 
 A modern, secure e-commerce website for premium footwear — built with Next.js (App Router), TypeScript, Tailwind CSS, PostgreSQL, Prisma, Auth.js, and Razorpay.
 
 Brands sold: **Campus**, **Nike**, **Aqualite**, **Action Shoes**.
 
-> **Branding status:** The official Instagram profile (`@brandora_house_studio`) could not be scraped for pixel-accurate assets (logo image, exact brand colors) — automated tools cannot retrieve Instagram's actual media. The site currently ships with a **placeholder premium brand identity** (dark ink / gold / cream palette, wordmark logo). Replace `src/app/globals.css` (CSS variables under "placeholder premium brand palette"), `src/components/layout/brand-logo.tsx`, and `public/favicon.ico` with the real approved assets before launch.
+> **Branding status:** No real logo image or brand color palette has been supplied yet. The site currently ships with a **placeholder premium brand identity** (dark ink / gold / cream palette, text-based wordmark logo). Replace `src/app/globals.css` (CSS variables under "placeholder premium brand palette"), `src/components/layout/brand-logo.tsx`, and `public/favicon.ico` with the real approved assets before launch.
 
 ## Tech Stack
 
@@ -79,7 +79,7 @@ npm run db:seed
 ```
 
 This creates:
-- An admin user: `admin@brandorahousestudio.com` / `Admin@12345`
+- An admin user: `admin@elorakicks.com` / `Admin@12345`
 - A sample customer: `customer@example.com` / `Customer@12345`
 - The four brands, sample categories, shipping rules, and several **clearly marked `[SAMPLE]`** products with variants.
 

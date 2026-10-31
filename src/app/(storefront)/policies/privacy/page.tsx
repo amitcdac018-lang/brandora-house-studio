@@ -8,7 +8,7 @@ export default function PrivacyPolicyPage() {
   return (
     <PolicyLayout title="Privacy Policy" updatedAt="Draft — pending legal review">
       <p>
-        This draft policy outlines how Brandora House Studio collects, uses, and protects your
+        This draft policy outlines how Elora Kicks collects, uses, and protects your
         personal information. Replace this placeholder with a policy reviewed by qualified legal
         counsel before launch.
       </p>
